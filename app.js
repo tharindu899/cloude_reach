@@ -1,194 +1,24 @@
 /* ═══════════════════════════════════════════════════════
    Claude Account Tracker — APP
-   Depends on: config.js (must be loaded first)
+   All account data (emails, state) lives in JSONBin only.
+   config.js must be loaded first.
    ═══════════════════════════════════════════════════════ */
 
 'use strict';
 
 const {
-  appName, appTagline,
-  defaultResetHours, holdMs,
+  appName, defaultResetHours, holdMs,
   storageKey, resetStorageKey,
-  accounts: DEFAULT_ACCOUNTS,
+  jbinKeyStore, jbinIdStore, jbinBase,
 } = CONFIG;
 
-const TOTAL = DEFAULT_ACCOUNTS.length;
-
-// ── JSONBin sync keys ────────────────────────────────────
-const JBIN_KEY_STORE = 'clt_jbin_key';
-const JBIN_ID_STORE  = 'clt_jbin_id';
-const JBIN_BASE      = 'https://api.jsonbin.io/v3/b';
-
 // ── Runtime state ────────────────────────────────────────
+let accounts     = [];          // loaded from cloud
 let activeFilter = 'all';
 let resetHours   = parseFloat(localStorage.getItem(resetStorageKey) || defaultResetHours);
 let syncTimer    = null;
-let syncStatus   = 'idle'; // idle | syncing | ok | error
-
-// ── Persistence ──────────────────────────────────────────
-function loadAccounts() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(storageKey));
-    if (saved && Array.isArray(saved) && saved.length === TOTAL) {
-      return saved.map((s, i) => ({
-        name: DEFAULT_ACCOUNTS[i].name, email: DEFAULT_ACCOUNTS[i].email,
-        locked: s.locked || false, lockTime: s.lockTime || null,
-        unlockTime: s.unlockTime || null, notes: s.notes || '',
-      }));
-    }
-  } catch (_) {}
-  return DEFAULT_ACCOUNTS.map(a => ({
-    name: a.name, email: a.email,
-    locked: false, lockTime: null, unlockTime: null, notes: '',
-  }));
-}
-
-function save() {
-  localStorage.setItem(storageKey, JSON.stringify(accounts));
-  schedulePush();
-}
-
-let accounts = loadAccounts();
-
-// ── JSONBin helpers ──────────────────────────────────────
-function jbinKey() { return localStorage.getItem(JBIN_KEY_STORE) || ''; }
-function jbinId()  { return localStorage.getItem(JBIN_ID_STORE)  || ''; }
-
-function setSyncStatus(s) {
-  syncStatus = s;
-  const el = $('sync-status');
-  if (!el) return;
-  const map = {
-    idle:    { text: 'not configured', cls: 'ss-idle'    },
-    syncing: { text: 'syncing…',       cls: 'ss-syncing' },
-    ok:      { text: 'synced ✓',       cls: 'ss-ok'      },
-    error:   { text: 'sync failed ✗',  cls: 'ss-error'   },
-  };
-  const m = map[s] || map.idle;
-  el.textContent = m.text;
-  el.className   = `sync-status-badge ${m.cls}`;
-}
-
-async function pushToJBin() {
-  const key = jbinKey(), id = jbinId();
-  if (!key || !id) return;
-  setSyncStatus('syncing');
-  try {
-    const res = await fetch(`${JBIN_BASE}/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'X-Master-Key': key },
-      body: JSON.stringify({ accounts, resetHours }),
-    });
-    if (!res.ok) throw new Error(res.status);
-    setSyncStatus('ok');
-  } catch (e) {
-    console.warn('JSONBin push failed:', e);
-    setSyncStatus('error');
-  }
-}
-
-async function pullFromJBin() {
-  const key = jbinKey(), id = jbinId();
-  if (!key || !id) return null;
-  setSyncStatus('syncing');
-  try {
-    const res = await fetch(`${JBIN_BASE}/${id}/latest`, {
-      headers: { 'X-Master-Key': key, 'X-Bin-Meta': 'false' },
-    });
-    if (!res.ok) throw new Error(res.status);
-    const data = await res.json();
-    setSyncStatus('ok');
-    return data;
-  } catch (e) {
-    console.warn('JSONBin pull failed:', e);
-    setSyncStatus('error');
-    return null;
-  }
-}
-
-async function createBin(key) {
-  const res = await fetch(JBIN_BASE, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Master-Key': key,
-      'X-Bin-Name':   'claude-tracker',
-      'X-Bin-Private':'true',
-    },
-    body: JSON.stringify({ accounts, resetHours }),
-  });
-  if (!res.ok) throw new Error(res.status);
-  const data = await res.json();
-  return data.metadata.id;
-}
-
-function schedulePush() {
-  clearTimeout(syncTimer);
-  syncTimer = setTimeout(pushToJBin, 1500);
-}
-
-// ── Sync panel logic ─────────────────────────────────────
-async function handleSyncSave() {
-  const keyEl  = $('jbin-key-input');
-  const idEl   = $('jbin-id-input');
-  const btnEl  = $('sync-save-btn');
-  const key    = keyEl.value.trim();
-  const manId  = idEl.value.trim();
-
-  if (!key) { showToast('Paste your Master Key first', 'red'); return; }
-
-  btnEl.textContent = 'Saving…';
-  btnEl.disabled    = true;
-
-  try {
-    let id = manId;
-    if (!id) {
-      // No bin ID yet — create one
-      id = await createBin(key);
-      idEl.value = id;
-      showToast('Bin created & saved!', 'green');
-    }
-    localStorage.setItem(JBIN_KEY_STORE, key);
-    localStorage.setItem(JBIN_ID_STORE,  id);
-    setSyncStatus('ok');
-    showToast('Cloud sync enabled ✓', 'green');
-  } catch (e) {
-    showToast('Failed — check your API key', 'red');
-    setSyncStatus('error');
-  } finally {
-    btnEl.textContent = 'Save & Enable';
-    btnEl.disabled    = false;
-  }
-}
-
-async function handleSyncPull() {
-  const data = await pullFromJBin();
-  if (!data) { showToast('Pull failed — check key/ID', 'red'); return; }
-  if (data.accounts && Array.isArray(data.accounts) && data.accounts.length === TOTAL) {
-    accounts = data.accounts.map((s, i) => ({
-      name: DEFAULT_ACCOUNTS[i].name, email: DEFAULT_ACCOUNTS[i].email,
-      locked: s.locked || false, lockTime: s.lockTime || null,
-      unlockTime: s.unlockTime || null, notes: s.notes || '',
-    }));
-    if (data.resetHours) resetHours = data.resetHours;
-    localStorage.setItem(storageKey, JSON.stringify(accounts));
-    localStorage.setItem(resetStorageKey, resetHours);
-    buildCards();
-    updateStats();
-    showToast('Pulled from cloud ✓', 'green');
-  } else {
-    showToast('Cloud data format mismatch', 'red');
-  }
-}
-
-function handleSyncClear() {
-  localStorage.removeItem(JBIN_KEY_STORE);
-  localStorage.removeItem(JBIN_ID_STORE);
-  $('jbin-key-input').value = '';
-  $('jbin-id-input').value  = '';
-  setSyncStatus('idle');
-  showToast('Cloud sync disabled', 'purple');
-}
+let syncStatus   = 'idle';
+let isBooting    = true;
 
 // ── Helpers ──────────────────────────────────────────────
 const $ = id => document.getElementById(id);
@@ -218,15 +48,17 @@ function tsToLocal(ts) {
   return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 function esc(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 
 // ── Toast ────────────────────────────────────────────────
 let toastTimer;
 function showToast(msg, color = 'green') {
   const el = $('toast');
   const palette = {
-    green:  { bg:'rgba(16,217,126,0.12)',  border:'rgba(16,217,126,0.3)',  text:'var(--green)'   },
-    red:    { bg:'rgba(255,83,112,0.12)',   border:'rgba(255,83,112,0.3)',  text:'var(--red)'     },
-    purple: { bg:'rgba(139,92,246,0.12)',   border:'rgba(139,92,246,0.3)', text:'var(--accent2)' },
+    green:  { bg:'rgba(16,217,126,0.12)',  border:'rgba(16,217,126,0.3)',  text:'#10d97e' },
+    red:    { bg:'rgba(255,83,112,0.12)',   border:'rgba(255,83,112,0.3)',  text:'#ff5370' },
+    purple: { bg:'rgba(139,92,246,0.12)',   border:'rgba(139,92,246,0.3)', text:'#a78bfa' },
+    amber:  { bg:'rgba(255,180,84,0.12)',   border:'rgba(255,180,84,0.3)', text:'#ffb454' },
   };
   const p = palette[color] || palette.green;
   el.textContent = msg;
@@ -235,7 +67,7 @@ function showToast(msg, color = 'green') {
   el.style.color       = p.text;
   el.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
 }
 
 // ── Live clock ───────────────────────────────────────────
@@ -244,6 +76,85 @@ function updateClock() {
   if (el) el.textContent = new Date().toLocaleTimeString('en-US',
     { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:true });
 }
+
+// ── JSONBin ──────────────────────────────────────────────
+function jbinKey() { return localStorage.getItem(jbinKeyStore) || ''; }
+function jbinId()  { return localStorage.getItem(jbinIdStore)  || ''; }
+
+function setSyncStatus(s) {
+  syncStatus = s;
+  const el = $('sync-status');
+  if (!el) return;
+  const map = {
+    idle:    { text: '○ not configured', cls: 'ss-idle'    },
+    syncing: { text: '◌ syncing…',       cls: 'ss-syncing' },
+    ok:      { text: '● synced',         cls: 'ss-ok'      },
+    error:   { text: '● error',          cls: 'ss-error'   },
+  };
+  const m = map[s] || map.idle;
+  el.textContent = m.text;
+  el.className   = `sync-badge ${m.cls}`;
+}
+
+async function pushToJBin() {
+  const key = jbinKey(), id = jbinId();
+  if (!key || !id) return;
+  setSyncStatus('syncing');
+  try {
+    const res = await fetch(`${jbinBase}/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Master-Key': key },
+      body: JSON.stringify({ accounts, resetHours, v: 8 }),
+    });
+    if (!res.ok) throw new Error(res.status);
+    setSyncStatus('ok');
+  } catch (e) {
+    console.warn('JSONBin push failed:', e);
+    setSyncStatus('error');
+  }
+}
+
+async function pullFromJBin() {
+  const key = jbinKey(), id = jbinId();
+  if (!key || !id) return null;
+  setSyncStatus('syncing');
+  try {
+    const res = await fetch(`${jbinBase}/${id}/latest`, {
+      headers: { 'X-Master-Key': key, 'X-Bin-Meta': 'false' },
+    });
+    if (!res.ok) throw new Error(res.status);
+    const data = await res.json();
+    setSyncStatus('ok');
+    return data;
+  } catch (e) {
+    console.warn('JSONBin pull failed:', e);
+    setSyncStatus('error');
+    return null;
+  }
+}
+
+async function createBin(key) {
+  const res = await fetch(jbinBase, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Master-Key': key,
+      'X-Bin-Name':   'claude-tracker',
+      'X-Bin-Private':'true',
+    },
+    body: JSON.stringify({ accounts, resetHours, v: 8 }),
+  });
+  if (!res.ok) throw new Error(res.status);
+  const data = await res.json();
+  return data.metadata.id;
+}
+
+function schedulePush() {
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(pushToJBin, 1200);
+}
+
+function save() { schedulePush(); }
 
 // ── Hold-to-confirm ──────────────────────────────────────
 function makeHoldButton(btn, callback) {
@@ -273,13 +184,15 @@ const ICONS = {
   bolt:     `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
   email:    `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>`,
   copy:     `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`,
-  cloud:    `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>`,
+  trash:    `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>`,
+  plus:     `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
+  key:      `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>`,
 };
 
 // ── Card HTML ─────────────────────────────────────────────
 function cardHTML(acc, i) {
   return `
-    <div class="card-glow" id="glow-${i}"></div>
+    <div class="card-top-bar" id="glow-${i}"></div>
     <div class="card-header">
       <div class="acct-info">
         <div class="acct-name">${esc(acc.name)}</div>
@@ -293,7 +206,8 @@ function cardHTML(acc, i) {
     <div class="email-chip">
       <span class="email-icon">${ICONS.email}</span>
       <span class="email-text" title="${esc(acc.email)}">${esc(acc.email)}</span>
-      <button class="copy-btn" id="copy-${i}" title="Copy email">${ICONS.copy}</button>
+      <button class="icon-btn copy-btn" id="copy-${i}" title="Copy email">${ICONS.copy}</button>
+      <button class="icon-btn del-btn" id="del-${i}" title="Delete account">${ICONS.trash}</button>
     </div>
     <div class="progress-wrap"><div class="progress-bar" id="prog-${i}"></div></div>
     <div class="unlock-row">
@@ -307,7 +221,7 @@ function cardHTML(acc, i) {
     <div class="sep"></div>
     <label class="input-label">Set unlock time</label>
     <input class="time-input" type="datetime-local" id="tp-${i}" value="${tsToLocal(Date.now())}">
-    <textarea class="notes-input" id="notes-${i}" placeholder="Notes (optional)…">${esc(acc.notes)}</textarea>
+    <textarea class="notes-input" id="notes-${i}" placeholder="Notes…">${esc(acc.notes || '')}</textarea>
     <div class="hold-hint">hold buttons to confirm</div>
     <div class="btn-row">
       <button class="btn btn-lock-now" id="btn-now-${i}">
@@ -327,7 +241,7 @@ function cardHTML(acc, i) {
 function buildCards() {
   const grid = $('grid');
   grid.innerHTML = '';
-  $('total-count').textContent = TOTAL;
+  $('total-count').textContent = accounts.length;
   $('resetHours').value        = resetHours;
 
   accounts.forEach((acc, i) => {
@@ -341,6 +255,12 @@ function buildCards() {
         .then(() => showToast(`Copied ${acc.email}`, 'purple'));
     });
 
+    makeHoldButton($(`del-${i}`), () => {
+      accounts.splice(i, 1);
+      save(); buildCards(); updateStats();
+      showToast('Account removed', 'amber');
+    });
+
     $(`notes-${i}`).addEventListener('input', e => {
       accounts[i].notes = e.target.value; save();
     });
@@ -350,14 +270,14 @@ function buildCards() {
       accounts[i] = { ...accounts[i], locked: true, lockTime: Date.now(), unlockTime: unlockTs };
       $(`tp-${i}`).value = tsToLocal(unlockTs);
       save(); updateStats();
-      showToast(`${acc.name} locked — unlocks in ${resetHours}h`, 'red');
+      showToast(`${acc.name} locked for ${resetHours}h`, 'red');
     });
 
     makeHoldButton($(`btn-lock-${i}`), () => {
       const picker   = $(`tp-${i}`);
       const unlockTs = picker?.value ? new Date(picker.value).getTime() : null;
-      if (!unlockTs || isNaN(unlockTs))  { showToast('Pick a valid unlock time', 'red'); return; }
-      if (unlockTs <= Date.now())         { showToast('Unlock time must be in the future', 'red'); return; }
+      if (!unlockTs || isNaN(unlockTs)) { showToast('Pick a valid unlock time', 'red'); return; }
+      if (unlockTs <= Date.now())        { showToast('Unlock time must be in the future', 'red'); return; }
       accounts[i] = { ...accounts[i], locked: true, lockTime: Date.now(), unlockTime: unlockTs };
       save(); updateStats();
       showToast(`${acc.name} locked until ${fmtTime(unlockTs)}`, 'red');
@@ -369,6 +289,17 @@ function buildCards() {
       showToast(`${acc.name} is now free`, 'green');
     });
   });
+
+  // Empty state
+  if (accounts.length === 0) {
+    grid.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">${ICONS.plus}</div>
+        <p>No accounts yet.</p>
+        <p class="empty-sub">Add your first Claude account using the button above.</p>
+      </div>
+    `;
+  }
 }
 
 // ── Update card ───────────────────────────────────────────
@@ -421,7 +352,7 @@ function updateCard(i) {
       cdLbl.textContent = 'time until unlock'; cdBox.className = 'countdown-box locked-box';
     } else if (isReady) {
       cdEl.className = 'cd-ready';
-      cdEl.innerHTML = `${ICONS.check.replace('12','16').replace('12','16')} Limit reset — use now`;
+      cdEl.innerHTML = `${ICONS.check.replace(/12/g,'16')} Limit reset — use now`;
       cdLbl.textContent = ''; cdBox.className = 'countdown-box ready-box';
     } else {
       cdEl.className = 'cd-idle'; cdEl.textContent = '--:--:--';
@@ -440,19 +371,116 @@ function updateStats() {
   let nActive = 0, nLocked = 0, nReady = 0, nextMs = Infinity;
   accounts.forEach(acc => {
     const rem = acc.unlockTime ? acc.unlockTime - now : 0;
-    if      (acc.locked && rem > 0)              { nLocked++; if (rem < nextMs) nextMs = rem; }
+    if      (acc.locked && rem > 0)               { nLocked++; if (rem < nextMs) nextMs = rem; }
     else if (acc.locked && rem <= 0 && acc.lockTime) nReady++;
-    else                                           nActive++;
+    else                                             nActive++;
   });
   $('stat-active').textContent = nActive;
   $('stat-locked').textContent = nLocked;
   $('stat-ready').textContent  = nReady;
   $('stat-next').textContent   = nextMs < Infinity ? fmtCountdown(nextMs) : '—';
-  $('fc-all').textContent    = TOTAL;
+  $('fc-all').textContent    = accounts.length;
   $('fc-active').textContent = nActive;
   $('fc-locked').textContent = nLocked;
   $('fc-ready').textContent  = nReady;
+  $('total-count').textContent = accounts.length;
   accounts.forEach((_, i) => updateCard(i));
+}
+
+// ── Add Account Modal ─────────────────────────────────────
+function openAddModal() {
+  const modal = $('add-modal');
+  modal.classList.add('open');
+  $('add-name').value  = '';
+  $('add-email').value = '';
+  $('add-name').focus();
+}
+function closeAddModal() {
+  $('add-modal').classList.remove('open');
+}
+
+function handleAddAccount() {
+  const name  = $('add-name').value.trim();
+  const email = $('add-email').value.trim();
+  if (!name)  { shakeInput('add-name');  showToast('Enter a name', 'red'); return; }
+  if (!email || !email.includes('@')) { shakeInput('add-email'); showToast('Enter a valid email', 'red'); return; }
+  accounts.push({ id: uid(), name, email, locked: false, lockTime: null, unlockTime: null, notes: '' });
+  save(); buildCards(); updateStats();
+  closeAddModal();
+  showToast(`${name} added`, 'green');
+}
+
+function shakeInput(id) {
+  const el = $(id);
+  el.classList.add('shake');
+  setTimeout(() => el.classList.remove('shake'), 500);
+}
+
+// ── Setup Modal ───────────────────────────────────────────
+function openSetupModal() {
+  const modal = $('setup-modal');
+  modal.classList.add('open');
+  const k = jbinKey(), id = jbinId();
+  if (k)  $('setup-key-input').value = k;
+  if (id) $('setup-id-input').value  = id;
+}
+function closeSetupModal() {
+  $('setup-modal').classList.remove('open');
+}
+
+async function handleSetupSave() {
+  const keyEl = $('setup-key-input');
+  const idEl  = $('setup-id-input');
+  const btn   = $('setup-save-btn');
+  const key   = keyEl.value.trim();
+  const manId = idEl.value.trim();
+
+  if (!key) { shakeInput('setup-key-input'); showToast('Paste your Master Key first', 'red'); return; }
+
+  btn.textContent = 'Connecting…'; btn.disabled = true;
+
+  try {
+    let id = manId;
+    if (!id) {
+      id = await createBin(key);
+      idEl.value = id;
+      showToast('Cloud bin created!', 'green');
+    }
+    localStorage.setItem(jbinKeyStore, key);
+    localStorage.setItem(jbinIdStore,  id);
+    setSyncStatus('ok');
+    showToast('Cloud sync enabled ✓', 'green');
+    closeSetupModal();
+  } catch (e) {
+    showToast('Failed — check your API key', 'red');
+    setSyncStatus('error');
+  } finally {
+    btn.textContent = 'Save & Connect'; btn.disabled = false;
+  }
+}
+
+async function handleSetupPull() {
+  const data = await pullFromJBin();
+  if (!data) { showToast('Pull failed', 'red'); return; }
+  if (data.accounts && Array.isArray(data.accounts)) {
+    accounts = data.accounts;
+    if (data.resetHours) { resetHours = data.resetHours; }
+    buildCards(); updateStats();
+    showToast('Pulled from cloud ✓', 'green');
+    closeSetupModal();
+  } else {
+    showToast('No data found in bin', 'amber');
+  }
+}
+
+function handleSetupClear() {
+  localStorage.removeItem(jbinKeyStore);
+  localStorage.removeItem(jbinIdStore);
+  $('setup-key-input').value = '';
+  $('setup-id-input').value  = '';
+  setSyncStatus('idle');
+  showToast('Cloud sync disabled', 'purple');
+  closeSetupModal();
 }
 
 // ── PWA ───────────────────────────────────────────────────
@@ -488,42 +516,22 @@ function setupPWA() {
   const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
   const link = document.createElement('link'); link.rel = 'manifest';
   link.href = URL.createObjectURL(blob); document.head.appendChild(link);
-
   if ('serviceWorker' in navigator) {
-    const sw = `const C='claude-tracker-v3';
-self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(['${location.href}'])))});
-self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)))})`;
+    const sw = `const C='claude-tracker-v4';self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(['${location.href}'])))});self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)))})`;
     navigator.serviceWorker.register(
       URL.createObjectURL(new Blob([sw], { type: 'application/javascript' })), { scope: '/' }
     ).catch(() => {});
   }
 }
 
-// ── Sync panel toggle ─────────────────────────────────────
-function initSyncPanel() {
-  // Restore saved values into inputs
-  const k = jbinKey(), id = jbinId();
-  if (k)  $('jbin-key-input').value = k;
-  if (id) $('jbin-id-input').value  = id;
-  setSyncStatus(k && id ? 'ok' : 'idle');
+// ── Boot ──────────────────────────────────────────────────
+setupPWA();
 
-  $('sync-toggle').addEventListener('click', () => {
-    const panel = $('sync-panel');
-    const isOpen = panel.style.display !== 'none';
-    panel.style.display = isOpen ? 'none' : 'block';
-    $('sync-toggle').classList.toggle('active', !isOpen);
-  });
-
-  $('sync-save-btn').addEventListener('click',  handleSyncSave);
-  $('sync-pull-btn').addEventListener('click',  handleSyncPull);
-  $('sync-clear-btn').addEventListener('click', handleSyncClear);
-}
-
-// ── Wire controls ─────────────────────────────────────────
+// Wire controls
 $('resetHours').addEventListener('change', e => {
   resetHours = parseFloat(e.target.value) || defaultResetHours;
   localStorage.setItem(resetStorageKey, resetHours);
-  updateStats();
+  updateStats(); schedulePush();
 });
 
 document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -535,26 +543,53 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
   });
 });
 
-// ── Boot ──────────────────────────────────────────────────
-setupPWA();
+// Add account button
+$('btn-add-account').addEventListener('click', () => {
+  if (!jbinKey()) {
+    showToast('Set up cloud sync first', 'amber');
+    openSetupModal();
+    return;
+  }
+  openAddModal();
+});
+
+// Cloud setup button
+$('btn-cloud-setup').addEventListener('click', openSetupModal);
+
+// Modal events
+$('add-modal-close').addEventListener('click', closeAddModal);
+$('add-modal-overlay').addEventListener('click', closeAddModal);
+$('add-confirm-btn').addEventListener('click', handleAddAccount);
+$('add-name').addEventListener('keydown', e => { if (e.key === 'Enter') $('add-email').focus(); });
+$('add-email').addEventListener('keydown', e => { if (e.key === 'Enter') handleAddAccount(); });
+
+$('setup-modal-close').addEventListener('click', closeSetupModal);
+$('setup-modal-overlay').addEventListener('click', closeSetupModal);
+$('setup-save-btn').addEventListener('click', handleSetupSave);
+$('setup-pull-btn').addEventListener('click', handleSetupPull);
+$('setup-clear-btn').addEventListener('click', handleSetupClear);
+
+// Initial render
 buildCards();
 updateStats();
 updateClock();
-initSyncPanel();
-// On load, auto-pull if configured
+setSyncStatus(jbinKey() && jbinId() ? 'ok' : 'idle');
+
+// Show setup modal on first visit if no key configured
+if (!jbinKey()) {
+  setTimeout(() => openSetupModal(), 600);
+}
+
+// Auto-pull from cloud on boot
 if (jbinKey() && jbinId()) {
   pullFromJBin().then(data => {
     if (!data) return;
-    if (data.accounts?.length === TOTAL) {
-      accounts = data.accounts.map((s, i) => ({
-        name: DEFAULT_ACCOUNTS[i].name, email: DEFAULT_ACCOUNTS[i].email,
-        locked: s.locked || false, lockTime: s.lockTime || null,
-        unlockTime: s.unlockTime || null, notes: s.notes || '',
-      }));
+    if (data.accounts && Array.isArray(data.accounts)) {
+      accounts = data.accounts;
       if (data.resetHours) { resetHours = data.resetHours; $('resetHours').value = resetHours; }
-      localStorage.setItem(storageKey, JSON.stringify(accounts));
       buildCards(); updateStats();
     }
   });
 }
+
 setInterval(() => { updateStats(); updateClock(); }, 1000);

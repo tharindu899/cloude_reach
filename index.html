@@ -4,123 +4,84 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Claude Account Tracker</title>
-  <meta name="theme-color" content="#0d0d1a">
+  <meta name="theme-color" content="#0a0a14">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="ClaudeTrack">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div class="app-wrapper">
 
+  <!-- Header -->
   <header>
     <div class="logo-row">
       <div class="logo-gem">
         <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <polygon points="24,2 44,16 44,32 24,46 4,32 4,16" fill="rgba(139,92,246,0.15)" stroke="rgba(139,92,246,0.6)" stroke-width="1.5"/>
-          <polygon points="24,8 38,18 38,30 24,40 10,30 10,18" fill="rgba(139,92,246,0.1)" stroke="rgba(139,92,246,0.3)" stroke-width="1"/>
-          <circle cx="24" cy="24" r="4" fill="#a78bfa"/>
+          <polygon points="24,2 44,16 44,32 24,46 4,32 4,16" fill="rgba(139,92,246,0.12)" stroke="rgba(139,92,246,0.55)" stroke-width="1.5"/>
+          <polygon points="24,8 38,18 38,30 24,40 10,30 10,18" fill="rgba(139,92,246,0.07)" stroke="rgba(139,92,246,0.25)" stroke-width="1"/>
+          <circle cx="24" cy="24" r="4" fill="#a78bfa" filter="url(#gf)"/>
+          <defs><filter id="gf"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
         </svg>
       </div>
-      <h1>Claude Tracker</h1>
+      <div class="logo-text">
+        <h1>Claude Tracker</h1>
+        <p class="subtitle">free plan · <span id="total-count">0</span> accounts · <span id="live-clock">--:--:--</span></p>
+      </div>
     </div>
-    <p class="subtitle">free plan · <span id="total-count">0</span> accounts · <span id="live-clock">--:--:--</span></p>
   </header>
 
+  <!-- Toolbar -->
   <div class="toolbar">
     <div class="config-pill">
-      <label for="resetHours">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px">
-          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-        </svg>Reset window
-      </label>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <label for="resetHours">Reset</label>
       <input type="number" id="resetHours" value="5" min="1" max="24" step="0.5">
-      <label for="resetHours">hrs / cycle</label>
+      <span class="pill-unit">hrs</span>
     </div>
 
-    <!-- Cloud sync toggle -->
-    <button class="config-pill sync-toggle-btn" id="sync-toggle">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px">
-        <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
-      </svg>
+    <button class="toolbar-btn btn-cloud" id="btn-cloud-setup">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
       Cloud Sync
-      <span class="sync-status-badge ss-idle" id="sync-status">not configured</span>
+      <span class="sync-badge ss-idle" id="sync-status">○ not configured</span>
+    </button>
+
+    <button class="toolbar-btn btn-add" id="btn-add-account">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add Account
     </button>
   </div>
 
-  <!-- Sync panel (hidden by default) -->
-  <div id="sync-panel" class="sync-panel" style="display:none">
-    <div class="sync-panel-inner">
-      <div class="sync-header">
-        <span class="sync-title">☁️ JSONBin Cloud Sync</span>
-        <a href="https://jsonbin.io" target="_blank" rel="noopener" class="sync-link">Get free API key ↗</a>
-      </div>
-      <p class="sync-desc">
-        Lock times sync across all your devices. Sign up at <strong>jsonbin.io</strong> → copy your <strong>Master Key</strong> → paste below. Leave Bin ID empty on first setup — it'll be created automatically.
-      </p>
-      <div class="sync-fields">
-        <div class="sync-field">
-          <label class="input-label">Master Key (secret key)</label>
-          <input type="password" id="jbin-key-input" class="time-input" placeholder="$2a$10$…" autocomplete="off">
-        </div>
-        <div class="sync-field">
-          <label class="input-label">Bin ID (auto-filled after first save)</label>
-          <input type="text" id="jbin-id-input" class="time-input" placeholder="64abc123def…" autocomplete="off">
-        </div>
-      </div>
-      <div class="sync-btn-row">
-        <button class="btn btn-lock-now" id="sync-save-btn" style="flex:2">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-          Save &amp; Enable
-        </button>
-        <button class="btn btn-set-lock" id="sync-pull-btn" style="flex:1.5">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/></svg>
-          Pull Now
-        </button>
-        <button class="btn btn-free" id="sync-clear-btn" style="flex:1">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          Disable
-        </button>
-      </div>
-    </div>
-  </div>
-
+  <!-- Stats row -->
   <div class="stats-row">
     <div class="stat-card s-active">
-      <span class="stat-icon">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-      </span>
+      <span class="stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
       <div class="stat-num green" id="stat-active">0</div>
       <div class="stat-label">Active</div>
     </div>
     <div class="stat-card s-locked">
-      <span class="stat-icon">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-      </span>
+      <span class="stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
       <div class="stat-num red" id="stat-locked">0</div>
       <div class="stat-label">Locked</div>
     </div>
     <div class="stat-card s-ready">
-      <span class="stat-icon">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-      </span>
+      <span class="stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>
       <div class="stat-num amber" id="stat-ready">0</div>
       <div class="stat-label">Ready</div>
     </div>
     <div class="stat-card s-next">
-      <span class="stat-icon" style="margin:0">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-      </span>
+      <span class="stat-icon s-next-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
       <div>
-        <div class="stat-num purple" id="stat-next" style="font-size:22px;letter-spacing:2px;line-height:1">—</div>
-        <div class="stat-label" style="margin-top:4px;text-align:left">Next Unlock</div>
+        <div class="stat-num purple" id="stat-next" style="font-size:20px;letter-spacing:2px;line-height:1">—</div>
+        <div class="stat-label" style="text-align:left;margin-top:4px">Next Unlock</div>
       </div>
     </div>
   </div>
 
+  <!-- Filter bar -->
   <div class="filter-bar">
     <button class="filter-btn active" data-filter="all">All <span class="filter-count" id="fc-all">0</span></button>
     <button class="filter-btn" data-filter="active">Active <span class="filter-count" id="fc-active">0</span></button>
@@ -128,12 +89,155 @@
     <button class="filter-btn" data-filter="ready">Ready <span class="filter-count" id="fc-ready">0</span></button>
   </div>
 
+  <!-- Card grid -->
   <div class="grid" id="grid"></div>
 
-  <footer>saved in browser · updates every second · <span>Claude Account Tracker</span></footer>
+  <footer>all data synced via jsonbin cloud · no emails stored locally · <span>Claude Tracker</span></footer>
 </div>
 
+<!-- Toast -->
 <div class="toast" id="toast"></div>
+
+
+<!-- ══════════════════════════════════════════════════════
+     ADD ACCOUNT MODAL
+     ═══════════════════════════════════════════════════ -->
+<div class="modal-backdrop" id="add-modal-overlay"></div>
+<div class="modal" id="add-modal" role="dialog" aria-modal="true" aria-labelledby="add-modal-title">
+  <div class="modal-header">
+    <div class="modal-icon modal-icon-green">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+    </div>
+    <div>
+      <h2 class="modal-title" id="add-modal-title">Add Account</h2>
+      <p class="modal-subtitle">Saved securely to your cloud bin</p>
+    </div>
+    <button class="modal-close" id="add-modal-close" aria-label="Close">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+
+  <div class="modal-body">
+    <div class="field-group">
+      <label class="field-label" for="add-name">Display Name</label>
+      <div class="field-wrap">
+        <span class="field-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </span>
+        <input class="field-input" type="text" id="add-name" placeholder="e.g. Tharindu" autocomplete="off" spellcheck="false">
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="add-email">Gmail Address</label>
+      <div class="field-wrap">
+        <span class="field-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        </span>
+        <input class="field-input" type="email" id="add-email" placeholder="user@gmail.com" autocomplete="off" spellcheck="false">
+      </div>
+    </div>
+
+    <div class="modal-notice">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      This email is stored in your JSONBin cloud only — not in this repository or any local file.
+    </div>
+  </div>
+
+  <div class="modal-footer">
+    <button class="modal-btn modal-btn-ghost" id="add-cancel-btn" onclick="closeAddModal ? closeAddModal() : document.getElementById('add-modal').classList.remove('open')">Cancel</button>
+    <button class="modal-btn modal-btn-primary" id="add-confirm-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add Account
+    </button>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════
+     CLOUD SETUP MODAL
+     ═══════════════════════════════════════════════════ -->
+<div class="modal-backdrop" id="setup-modal-overlay"></div>
+<div class="modal modal-wide" id="setup-modal" role="dialog" aria-modal="true" aria-labelledby="setup-modal-title">
+  <div class="modal-header">
+    <div class="modal-icon modal-icon-purple">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+    </div>
+    <div>
+      <h2 class="modal-title" id="setup-modal-title">Cloud Sync Setup</h2>
+      <p class="modal-subtitle">JSONBin.io · free & private</p>
+    </div>
+    <button class="modal-close" id="setup-modal-close" aria-label="Close">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+
+  <div class="modal-body">
+
+    <!-- Step guide -->
+    <div class="setup-steps">
+      <div class="setup-step">
+        <div class="step-num">1</div>
+        <div class="step-text">Go to <a href="https://jsonbin.io" target="_blank" rel="noopener" class="setup-link">jsonbin.io</a> and create a free account</div>
+      </div>
+      <div class="setup-step">
+        <div class="step-num">2</div>
+        <div class="step-text">Navigate to <strong>API Keys</strong> and copy your <strong>Master Key</strong></div>
+      </div>
+      <div class="setup-step">
+        <div class="step-num">3</div>
+        <div class="step-text">Paste the key below. Leave Bin ID empty on first use — it auto-creates.</div>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="setup-key-input">
+        Master Key
+        <span class="field-badge">secret</span>
+      </label>
+      <div class="field-wrap">
+        <span class="field-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+        </span>
+        <input class="field-input field-mono" type="password" id="setup-key-input" placeholder="$2a$10$…" autocomplete="off" spellcheck="false">
+        <button class="field-reveal" onclick="const i=document.getElementById('setup-key-input');i.type=i.type==='password'?'text':'password'" title="Toggle visibility">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="setup-id-input">
+        Bin ID
+        <span class="field-badge field-badge-dim">auto-filled</span>
+      </label>
+      <div class="field-wrap">
+        <span class="field-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+        </span>
+        <input class="field-input field-mono" type="text" id="setup-id-input" placeholder="auto-created on first save…" autocomplete="off" spellcheck="false">
+      </div>
+    </div>
+
+    <div class="modal-notice modal-notice-purple">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      Your key is stored only in this browser's localStorage. It is never sent to any server other than JSONBin.
+    </div>
+  </div>
+
+  <div class="modal-footer modal-footer-3">
+    <button class="modal-btn modal-btn-danger" id="setup-clear-btn">Disable</button>
+    <button class="modal-btn modal-btn-secondary" id="setup-pull-btn">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/></svg>
+      Pull Now
+    </button>
+    <button class="modal-btn modal-btn-primary" id="setup-save-btn">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+      Save & Connect
+    </button>
+  </div>
+</div>
+
 
 <script src="config.js"></script>
 <script src="app.js"></script>
