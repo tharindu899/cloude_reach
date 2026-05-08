@@ -483,21 +483,71 @@ body::after {
 /* Inputs */
 .input-label { font-size: 10px; color: var(--muted2); font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: block; }
 
-.time-input {
-  width: 100%;
+/* ── Custom datetime picker ── */
+.dtp-wrap {
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.dtp-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   background: rgba(255,255,255,0.04);
   border: 1px solid var(--border2);
   border-radius: var(--radius-sm);
-  color: var(--text);
-  font-family: var(--mono);
-  font-size: 11px;
-  padding: 8px 10px;
-  outline: none;
-  margin-bottom: 10px;
+  padding: 9px 12px;
   transition: border-color 0.2s, box-shadow 0.2s;
-  color-scheme: dark;
 }
-.time-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+.dtp-row:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+.dtp-div {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 13px;
+  flex-shrink: 0;
+  padding: 0 1px;
+}
+.dtp-num {
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--amber);
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  width: 32px;
+  padding: 0;
+  -moz-appearance: textfield;
+}
+.dtp-num::-webkit-inner-spin-button,
+.dtp-num::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.dtp-num::placeholder { color: var(--muted); font-weight: 400; font-size: 10px; }
+.dtp-year { width: 48px; }
+.dtp-hr   { width: 28px; }
+.dtp-min  { width: 28px; }
+.dtp-day  { width: 28px; }
+.dtp-sel {
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--amber);
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0 2px;
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  text-align: center;
+}
+.dtp-sel option { background: #10101e; color: var(--text); }
+.dtp-ap { flex: 0 0 36px; text-align: center; color: var(--accent2); }
 
 .notes-input {
   width: 100%;
