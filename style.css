@@ -695,14 +695,20 @@ footer span { color: var(--accent2); }
 /* When any modal has .open, show the matching backdrop */
 #add-modal.open   { display: flex; animation: modalIn 0.3s ease both; }
 #setup-modal.open { display: flex; animation: modalIn 0.3s ease both; }
+#lock-modal.open  { display: flex; animation: modalIn 0.3s ease both; }
+#free-modal.open  { display: flex; animation: modalIn 0.3s ease both; }
 
 /* Activate backdrop alongside open modal */
 #add-modal.open   ~ #add-modal-overlay,
-#setup-modal.open ~ #setup-modal-overlay { opacity: 1 !important; pointer-events: auto !important; }
+#setup-modal.open ~ #setup-modal-overlay,
+#lock-modal.open  ~ #lock-modal-overlay,
+#free-modal.open  ~ #free-modal-overlay { opacity: 1 !important; pointer-events: auto !important; }
 
 /* Reorder so overlay appears behind modal but above page */
 #add-modal-overlay,
-#setup-modal-overlay {
+#setup-modal-overlay,
+#lock-modal-overlay,
+#free-modal-overlay {
   position: fixed; inset: 0;
   background: rgba(0,0,0,0.65);
   backdrop-filter: blur(6px);
@@ -751,6 +757,7 @@ footer span { color: var(--accent2); }
 }
 .modal-icon-green  { background: var(--green-dim);  border: 1px solid rgba(16,217,126,0.2);  color: var(--green); }
 .modal-icon-purple { background: var(--accent-dim); border: 1px solid rgba(139,92,246,0.25); color: var(--accent2); }
+.modal-icon-red    { background: var(--red-dim);    border: 1px solid rgba(255,83,112,0.25); color: var(--red); }
 
 .modal-title {
   font-size: 16px;
@@ -997,6 +1004,85 @@ footer span { color: var(--accent2); }
   border-color: rgba(255,83,112,0.2);
 }
 .modal-btn-danger:hover { background: rgba(255,83,112,0.15); box-shadow: 0 0 12px var(--red-glow); }
+
+.modal-btn-red {
+  background: linear-gradient(135deg, #ff5370 0%, #c0392b 100%);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4px 14px rgba(255,83,112,0.35);
+}
+.modal-btn-red:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(255,83,112,0.5); }
+
+/* ── Lock modal specifics ── */
+.lock-modal-acct {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  color: var(--muted2);
+  font-family: var(--mono);
+  background: rgba(255,83,112,0.05);
+  border: 1px solid rgba(255,83,112,0.15);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+}
+.lock-modal-acct strong { color: var(--text); }
+
+.time-input-lg {
+  font-size: 28px !important;
+  letter-spacing: 4px !important;
+  padding: 14px 16px 14px 42px !important;
+  text-align: center;
+}
+
+.lock-date-hint {
+  font-size: 11px;
+  font-family: var(--mono);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  margin-top: 8px;
+  text-align: center;
+  min-height: 28px;
+  transition: all 0.2s;
+}
+.hint-today    { background: var(--green-dim);  color: var(--green);  border: 1px solid rgba(16,217,126,0.2); }
+.hint-tomorrow { background: var(--amber-dim);  color: var(--amber);  border: 1px solid rgba(255,180,84,0.2); }
+
+/* ── Free modal specifics ── */
+.free-confirm-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 12px 8px 4px;
+  gap: 10px;
+}
+.free-confirm-icon {
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  background: var(--green-dim);
+  border: 1px solid rgba(16,217,126,0.2);
+  color: var(--green);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+.free-confirm-text {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+}
+.free-confirm-text strong { color: var(--green); }
+.free-confirm-sub {
+  font-size: 12px;
+  color: var(--muted2);
+  font-family: var(--mono);
+  line-height: 1.6;
+  max-width: 280px;
+}
 
 /* ── Animations ───────────────────────────────────────── */
 @keyframes fadeDown  { from{opacity:0;transform:translateY(-16px)} to{opacity:1;transform:translateY(0)} }

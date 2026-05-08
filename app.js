@@ -222,21 +222,13 @@ function cardHTML(acc, i) {
       <div class="cd-sublabel" id="cd-lbl-${i}">not locked</div>
     </div>
     <div class="sep"></div>
-    <label class="input-label">Set unlock time</label>
-    <div class="time-input-wrap">
-      <span class="time-input-icon">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-      </span>
-      <input class="time-input" type="time" id="tp-${i}" value="${tsToLocalTime()}">
-    </div>
     <textarea class="notes-input" id="notes-${i}" placeholder="Notes…">${esc(acc.notes || '')}</textarea>
-    <div class="hold-hint">hold buttons to confirm</div>
     <div class="btn-row btn-row-2">
       <button class="btn btn-set-lock" id="btn-lock-${i}">
-        <div class="btn-hold-fill"></div>${ICONS.lock} Set Lock
+        ${ICONS.lock} Set Lock
       </button>
       <button class="btn btn-free" id="btn-unlock-${i}" disabled>
-        <div class="btn-hold-fill"></div>${ICONS.lockOpen} Free
+        ${ICONS.lockOpen} Free
       </button>
     </div>
   `;
@@ -269,29 +261,8 @@ function buildCards() {
       accounts[i].notes = e.target.value; save();
     });
 
-    makeHoldButton($(`btn-lock-${i}`), () => {
-      const picker   = $(`tp-${i}`);
-      const timeVal  = picker?.value; // "HH:MM"
-      if (!timeVal) { showToast('Pick a valid unlock time', 'red'); return; }
-      const [h, m] = timeVal.split(':').map(Number);
-      const target = new Date();
-      target.setSeconds(0, 0);
-      target.setHours(h, m);
-      if (target.getTime() <= Date.now()) {
-        target.setDate(target.getDate() + 1); // auto tomorrow
-      }
-      const unlockTs = target.getTime();
-      accounts[i] = { ...accounts[i], locked: true, lockTime: Date.now(), unlockTime: unlockTs };
-      save(); updateStats();
-      const isNextDay = target.getDate() !== new Date().getDate();
-      showToast(`${acc.name} locked until ${fmtTime(unlockTs)}${isNextDay ? ' (tomorrow)' : ''}`, 'red');
-    });
-
-    makeHoldButton($(`btn-unlock-${i}`), () => {
-      accounts[i] = { ...accounts[i], locked: false, lockTime: null, unlockTime: null };
-      save(); updateStats();
-      showToast(`${acc.name} is now free`, 'green');
-    });
+    $(`btn-lock-${i}`).addEventListener('click', () => openLockModal(i));
+    $(`btn-unlock-${i}`).addEventListener('click', () => openFreeModal(i));
   });
 
   // Empty state
@@ -418,6 +389,73 @@ function shakeInput(id) {
   const el = $(id);
   el.classList.add('shake');
   setTimeout(() => el.classList.remove('shake'), 500);
+}
+
+// ── Lock Modal ────────────────────────────────────────────
+let lockTargetIndex = -1;
+
+function openLockModal(i) {
+  lockTargetIndex = i;
+  const acc = accounts[i];
+  $('lock-modal-name').textContent  = acc.name;
+  $('lock-modal-email').textContent = acc.email;
+  $('lock-modal-time').value = tsToLocalTime();
+  updateLockHint();
+  $('lock-modal').classList.add('open');
+  $('lock-modal-time').focus();
+}
+function closeLockModal() {
+  $('lock-modal').classList.remove('open');
+  lockTargetIndex = -1;
+}
+function updateLockHint() {
+  const val = $('lock-modal-time').value;
+  const hint = $('lock-modal-hint');
+  if (!val) { hint.textContent = ''; return; }
+  const [h, m] = val.split(':').map(Number);
+  const target = new Date(); target.setSeconds(0,0); target.setHours(h, m);
+  if (target.getTime() <= Date.now()) target.setDate(target.getDate() + 1);
+  const isNextDay = target.toDateString() !== new Date().toDateString();
+  hint.textContent = isNextDay
+    ? `⟶ Tomorrow · ${fmtTime(target.getTime())}`
+    : `⟶ Today · ${fmtTime(target.getTime())}`;
+  hint.className = `lock-date-hint ${isNextDay ? 'hint-tomorrow' : 'hint-today'}`;
+}
+function handleLockConfirm() {
+  const i = lockTargetIndex;
+  if (i < 0) return;
+  const val = $('lock-modal-time').value;
+  if (!val) { showToast('Pick an unlock time', 'red'); return; }
+  const [h, m] = val.split(':').map(Number);
+  const target = new Date(); target.setSeconds(0,0); target.setHours(h, m);
+  if (target.getTime() <= Date.now()) target.setDate(target.getDate() + 1);
+  const unlockTs = target.getTime();
+  const isNextDay = target.toDateString() !== new Date().toDateString();
+  accounts[i] = { ...accounts[i], locked: true, lockTime: Date.now(), unlockTime: unlockTs };
+  save(); updateStats(); closeLockModal();
+  showToast(`${accounts[i].name} locked until ${fmtTime(unlockTs)}${isNextDay ? ' (tomorrow)' : ''}`, 'red');
+}
+
+// ── Free Modal ────────────────────────────────────────────
+let freeTargetIndex = -1;
+
+function openFreeModal(i) {
+  freeTargetIndex = i;
+  const acc = accounts[i];
+  $('free-modal-name').textContent  = acc.name;
+  $('free-modal-email').textContent = acc.email;
+  $('free-modal').classList.add('open');
+}
+function closeFreeModal() {
+  $('free-modal').classList.remove('open');
+  freeTargetIndex = -1;
+}
+function handleFreeConfirm() {
+  const i = freeTargetIndex;
+  if (i < 0) return;
+  accounts[i] = { ...accounts[i], locked: false, lockTime: null, unlockTime: null };
+  save(); updateStats(); closeFreeModal();
+  showToast(`${accounts[i].name} is now free`, 'green');
 }
 
 // ── Setup Modal ───────────────────────────────────────────
@@ -564,6 +602,20 @@ $('setup-modal-overlay').addEventListener('click', closeSetupModal);
 $('setup-save-btn').addEventListener('click', handleSetupSave);
 $('setup-pull-btn').addEventListener('click', handleSetupPull);
 $('setup-clear-btn').addEventListener('click', handleSetupClear);
+
+// Lock modal
+$('lock-modal-close').addEventListener('click', closeLockModal);
+$('lock-modal-overlay').addEventListener('click', closeLockModal);
+$('lock-modal-cancel').addEventListener('click', closeLockModal);
+$('lock-modal-confirm').addEventListener('click', handleLockConfirm);
+$('lock-modal-time').addEventListener('input', updateLockHint);
+$('lock-modal-time').addEventListener('keydown', e => { if (e.key === 'Enter') handleLockConfirm(); });
+
+// Free modal
+$('free-modal-close').addEventListener('click', closeFreeModal);
+$('free-modal-overlay').addEventListener('click', closeFreeModal);
+$('free-modal-cancel').addEventListener('click', closeFreeModal);
+$('free-modal-confirm').addEventListener('click', handleFreeConfirm);
 
 // Initial render
 buildCards();
