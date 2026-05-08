@@ -125,8 +125,7 @@ h1 {
   justify-content: center;
   gap: 12px;
   margin-bottom: 28px;
-  flex-wrap: nowrap;            /* always horizontal */
-  overflow-x: auto;             /* scroll if too narrow */
+  flex-wrap: wrap;
   animation: fadeUp 0.6s 0.1s ease both;
 }
 
@@ -227,7 +226,6 @@ h1 {
   margin-bottom: 32px;
   animation: fadeUp 0.6s 0.15s ease both;
 }
-/* ... rest of the file is unchanged until the media query ... */
 
 .stat-card {
   background: var(--glass);
@@ -1007,3 +1005,60 @@ footer span { color: var(--accent2); }
 ::-webkit-scrollbar-thumb:hover { background: rgba(139,92,246,0.5); }
 
 .hidden { display: none !important; }
+
+
+/* ─────────────────────────────────────
+   TOP TOOLBAR HORIZONTAL
+───────────────────────────────────── */
+
+.toolbar{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  flex-wrap:nowrap;
+}
+
+.config-pill,
+.toolbar-btn{
+  height:48px;
+}
+
+/* mobile */
+@media (max-width:768px){
+
+  .toolbar{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:8px;
+  }
+
+  .config-pill{
+    width:100%;
+    justify-content:center;
+    padding:8px;
+  }
+
+  .toolbar-btn{
+    width:100%;
+    justify-content:center;
+    padding:8px 10px;
+    font-size:11px;
+  }
+
+  .sync-badge{
+    display:none;
+  }
+
+  /* lock buttons horizontal */
+  .btn-row{
+    grid-template-columns:1fr 1fr 1fr;
+    gap:6px;
+  }
+
+  .btn{
+    font-size:10px;
+    padding:10px 4px;
+    gap:3px;
+  }
+}
