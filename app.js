@@ -47,33 +47,6 @@ function tsToLocal(ts) {
   const p = n => String(n).padStart(2,'0');
   return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
 }
-
-function getDtpValue(i) {
-  const d  = parseInt($(`dtp-d-${i}`).value)  || 0;
-  const m  = parseInt($(`dtp-m-${i}`).value);
-  const y  = parseInt($(`dtp-y-${i}`).value)  || 0;
-  const h  = parseInt($(`dtp-h-${i}`).value)  || 0;
-  const mi = parseInt($(`dtp-mi-${i}`).value) || 0;
-  const ap = $(`dtp-ap-${i}`).value;
-  if (!d || !y) return null;
-  let hour = h % 12;
-  if (ap === 'pm') hour += 12;
-  const dt = new Date(y, m, d, hour, mi, 0, 0);
-  return isNaN(dt.getTime()) ? null : dt.getTime();
-}
-
-function setDtpValue(i, ts) {
-  const d = new Date(ts || Date.now());
-  $(`dtp-d-${i}`).value  = d.getDate();
-  $(`dtp-m-${i}`).value  = d.getMonth();
-  $(`dtp-y-${i}`).value  = d.getFullYear();
-  let h = d.getHours();
-  const ap = h >= 12 ? 'pm' : 'am';
-  h = h % 12; if (h === 0) h = 12;
-  $(`dtp-h-${i}`).value  = h;
-  $(`dtp-mi-${i}`).value = String(d.getMinutes()).padStart(2, '0');
-  $(`dtp-ap-${i}`).value = ap;
-}
 function esc(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 
@@ -251,29 +224,7 @@ function cardHTML(acc, i) {
     </div>
     <div class="sep"></div>
     <label class="input-label">Set unlock time</label>
-    <div class="dtp-wrap" id="dtp-${i}">
-      <div class="dtp-row">
-        <input class="dtp-num dtp-day"  type="number" id="dtp-d-${i}"  min="1"    max="31"   placeholder="DD">
-        <span class="dtp-div">/</span>
-        <select class="dtp-sel" id="dtp-m-${i}">
-          <option value="0">Jan</option><option value="1">Feb</option><option value="2">Mar</option>
-          <option value="3">Apr</option><option value="4">May</option><option value="5">Jun</option>
-          <option value="6">Jul</option><option value="7">Aug</option><option value="8">Sep</option>
-          <option value="9">Oct</option><option value="10">Nov</option><option value="11">Dec</option>
-        </select>
-        <span class="dtp-div">/</span>
-        <input class="dtp-num dtp-year" type="number" id="dtp-y-${i}"  min="2024"  max="2035"  placeholder="YYYY">
-      </div>
-      <div class="dtp-row">
-        <input class="dtp-num dtp-hr"   type="number" id="dtp-h-${i}"  min="1"    max="12"   placeholder="HH">
-        <span class="dtp-div">:</span>
-        <input class="dtp-num dtp-min"  type="number" id="dtp-mi-${i}" min="0"    max="59"   placeholder="MM">
-        <select class="dtp-sel dtp-ap"  id="dtp-ap-${i}">
-          <option value="am">AM</option>
-          <option value="pm">PM</option>
-        </select>
-      </div>
-    </div>
+    <input class="time-input" type="datetime-local" id="tp-${i}" value="${tsToLocal(Date.now())}">
     <textarea class="notes-input" id="notes-${i}" placeholder="Notes…">${esc(acc.notes || '')}</textarea>
     <div class="hold-hint">hold buttons to confirm</div>
     <div class="btn-row">
@@ -307,9 +258,6 @@ function buildCards() {
         .then(() => showToast(`Copied ${acc.email}`, 'purple'));
     });
 
-    // Init picker to now + 5 min
-    setDtpValue(i, Date.now() + 5 * 60000);
-
     makeHoldButton($(`del-${i}`), () => {
       accounts.splice(i, 1);
       save(); buildCards(); updateStats();
@@ -323,13 +271,14 @@ function buildCards() {
     makeHoldButton($(`btn-now-${i}`), () => {
       const unlockTs = Date.now() + resetHours * 3600000;
       accounts[i] = { ...accounts[i], locked: true, lockTime: Date.now(), unlockTime: unlockTs };
-      setDtpValue(i, unlockTs);
+      $(`tp-${i}`).value = tsToLocal(unlockTs);
       save(); updateStats();
       showToast(`${acc.name} locked for ${resetHours}h`, 'red');
     });
 
     makeHoldButton($(`btn-lock-${i}`), () => {
-      const unlockTs = getDtpValue(i);
+      const picker   = $(`tp-${i}`);
+      const unlockTs = picker?.value ? new Date(picker.value).getTime() : null;
       if (!unlockTs || isNaN(unlockTs)) { showToast('Pick a valid unlock time', 'red'); return; }
       if (unlockTs <= Date.now())        { showToast('Unlock time must be in the future', 'red'); return; }
       accounts[i] = { ...accounts[i], locked: true, lockTime: Date.now(), unlockTime: unlockTs };
