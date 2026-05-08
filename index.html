@@ -48,6 +48,13 @@
 
   <!-- Stats row -->
   <div class="stats-row">
+    <div class="stat-card s-next">
+      <span class="stat-icon s-next-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+      <div>
+        <div class="stat-num purple" id="stat-next" style="font-size:20px;letter-spacing:2px;line-height:1">—</div>
+        <div class="stat-label" style="text-align:left;margin-top:4px">Next Unlock</div>
+      </div>
+    </div>
     <div class="stat-card s-active">
       <span class="stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
       <div class="stat-num green" id="stat-active">0</div>
@@ -62,13 +69,6 @@
       <span class="stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>
       <div class="stat-num amber" id="stat-ready">0</div>
       <div class="stat-label">Ready</div>
-    </div>
-    <div class="stat-card s-next">
-      <span class="stat-icon s-next-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
-      <div>
-        <div class="stat-num purple" id="stat-next" style="font-size:20px;letter-spacing:2px;line-height:1">—</div>
-        <div class="stat-label" style="text-align:left;margin-top:4px">Next Unlock</div>
-      </div>
     </div>
   </div>
 
@@ -256,11 +256,18 @@
 
     <div class="field-group">
       <label class="field-label">Unlock Time</label>
-      <div class="time-input-wrap" style="margin-bottom:0">
-        <span class="time-input-icon">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        </span>
-        <input class="time-input time-input-lg" type="time" id="lock-modal-time">
+      <div class="hm-picker">
+        <div class="hm-unit">
+          <button class="hm-arrow" id="hm-hour-up" type="button">▲</button>
+          <input class="hm-input" type="number" id="lock-hour" min="0" max="23" placeholder="00">
+          <button class="hm-arrow" id="hm-hour-dn" type="button">▼</button>
+        </div>
+        <span class="hm-colon">:</span>
+        <div class="hm-unit">
+          <button class="hm-arrow" id="hm-min-up" type="button">▲</button>
+          <input class="hm-input" type="number" id="lock-min" min="0" max="59" placeholder="00">
+          <button class="hm-arrow" id="hm-min-dn" type="button">▼</button>
+        </div>
       </div>
       <div class="lock-date-hint hint-today" id="lock-modal-hint"></div>
     </div>

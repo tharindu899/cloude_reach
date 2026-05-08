@@ -399,20 +399,22 @@ function openLockModal(i) {
   const acc = accounts[i];
   $('lock-modal-name').textContent  = acc.name;
   $('lock-modal-email').textContent = acc.email;
-  $('lock-modal-time').value = tsToLocalTime();
+  const d = new Date();
+  $('lock-hour').value = String(d.getHours()).padStart(2, '0');
+  $('lock-min').value  = String(d.getMinutes()).padStart(2, '0');
   updateLockHint();
   $('lock-modal').classList.add('open');
-  $('lock-modal-time').focus();
+  $('lock-hour').focus();
 }
 function closeLockModal() {
   $('lock-modal').classList.remove('open');
   lockTargetIndex = -1;
 }
 function updateLockHint() {
-  const val = $('lock-modal-time').value;
+  const h = parseInt($('lock-hour').value, 10);
+  const m = parseInt($('lock-min').value,  10);
   const hint = $('lock-modal-hint');
-  if (!val) { hint.textContent = ''; return; }
-  const [h, m] = val.split(':').map(Number);
+  if (isNaN(h) || isNaN(m)) { hint.textContent = ''; return; }
   const target = new Date(); target.setSeconds(0,0); target.setHours(h, m);
   if (target.getTime() <= Date.now()) target.setDate(target.getDate() + 1);
   const isNextDay = target.toDateString() !== new Date().toDateString();
@@ -424,9 +426,11 @@ function updateLockHint() {
 function handleLockConfirm() {
   const i = lockTargetIndex;
   if (i < 0) return;
-  const val = $('lock-modal-time').value;
-  if (!val) { showToast('Pick an unlock time', 'red'); return; }
-  const [h, m] = val.split(':').map(Number);
+  const h = parseInt($('lock-hour').value, 10);
+  const m = parseInt($('lock-min').value,  10);
+  if (isNaN(h) || isNaN(m) || h < 0 || h > 23 || m < 0 || m > 59) {
+    showToast('Enter a valid time (0–23 h, 0–59 m)', 'red'); return;
+  }
   const target = new Date(); target.setSeconds(0,0); target.setHours(h, m);
   if (target.getTime() <= Date.now()) target.setDate(target.getDate() + 1);
   const unlockTs = target.getTime();
@@ -608,8 +612,22 @@ $('lock-modal-close').addEventListener('click', closeLockModal);
 $('lock-modal-overlay').addEventListener('click', closeLockModal);
 $('lock-modal-cancel').addEventListener('click', closeLockModal);
 $('lock-modal-confirm').addEventListener('click', handleLockConfirm);
-$('lock-modal-time').addEventListener('input', updateLockHint);
-$('lock-modal-time').addEventListener('keydown', e => { if (e.key === 'Enter') handleLockConfirm(); });
+
+// HH/MM arrow buttons
+function clampSet(id, min, max, delta) {
+  const el = $(id);
+  const cur = parseInt(el.value, 10) || 0;
+  el.value = String(Math.min(max, Math.max(min, cur + delta))).padStart(2, '0');
+  updateLockHint();
+}
+$('hm-hour-up').addEventListener('click', () => clampSet('lock-hour', 0, 23,  1));
+$('hm-hour-dn').addEventListener('click', () => clampSet('lock-hour', 0, 23, -1));
+$('hm-min-up').addEventListener('click',  () => clampSet('lock-min',  0, 59,  1));
+$('hm-min-dn').addEventListener('click',  () => clampSet('lock-min',  0, 59, -1));
+$('lock-hour').addEventListener('input', updateLockHint);
+$('lock-min').addEventListener('input',  updateLockHint);
+$('lock-hour').addEventListener('keydown', e => { if (e.key === 'Enter') $('lock-min').focus(); });
+$('lock-min').addEventListener('keydown',  e => { if (e.key === 'Enter') handleLockConfirm(); });
 
 // Free modal
 $('free-modal-close').addEventListener('click', closeFreeModal);
