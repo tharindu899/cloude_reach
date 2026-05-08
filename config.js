@@ -24,14 +24,14 @@ const CONFIG = {
   //    Add / remove objects here.
   //    Each entry: { name: 'Display Name', email: 'user@example.com' }
   accounts: [
-    { name: 'Tharindu', email: 'tprabath81@gmail.com'    },
-    { name: 'Lakshan',  email: 'prabath99t@gmail.com'    },
-    { name: 'Malli',    email: 'tprabath84@gmail.com'    },
+    { name: 'tharindu', email: 'tprabath81@gmail.com'    },
+    { name: 'lakshan',  email: 'prabath99t@gmail.com'    },
+    { name: 'malli',    email: 'tprabath84@gmail.com'    },
     { name: 'Diana',    email: 'crypto.th99@gmail.com'   },
     { name: 'Rema',     email: 'rema99.praba@gmail.com'  },
-    // { name: 'Frank',  email: 'frank@outlook.com'      },
-    // { name: 'Grace',  email: 'grace@yahoo.com'        },
-    // { name: 'Henry',  email: 'henry@proton.me'        },
+    { name: 'airtel',  email: 'oracal.tharindu99@gmail.com'    },
+    { name: 't•',  email: 'ocean.vps.1995@gmail.com'      },
+    { name: 'prabath',  email: 'deploy.heroku99@gmail.com'   },
   ],
 
 };
