@@ -235,29 +235,12 @@ function cardHTML(acc, i) {
 }
 
 // ── Build cards ───────────────────────────────────────────
-function sortedIndices() {
-  const now = Date.now();
-  return accounts
-    .map((acc, i) => {
-      const rem = acc.unlockTime ? acc.unlockTime - now : 0;
-      const isLocked = acc.locked && rem > 0;
-      const isReady  = acc.locked && rem <= 0 && !!acc.lockTime;
-      // locked → sort by soonest unlock (0), ready (1), active (2)
-      const group = isLocked ? 0 : isReady ? 1 : 2;
-      const sortKey = isLocked ? acc.unlockTime : (isReady ? 0 : Infinity);
-      return { i, group, sortKey };
-    })
-    .sort((a, b) => a.group - b.group || a.sortKey - b.sortKey)
-    .map(o => o.i);
-}
-
 function buildCards() {
   const grid = $('grid');
   grid.innerHTML = '';
   $('total-count').textContent = accounts.length;
 
-  sortedIndices().forEach(i => {
-    const acc = accounts[i];
+  accounts.forEach((acc, i) => {
     const card = document.createElement('div');
     card.id = `card-${i}`; card.className = 'card';
     card.innerHTML = cardHTML(acc, i);
@@ -306,6 +289,15 @@ function updateCard(i) {
   const cardEl = $(`card-${i}`);
   if (!cardEl) return;
   cardEl.className = `card${isLocked ? ' locked' : isReady ? ' ready' : ''}`;
+
+  // Sort order: locked (soonest first) → ready → active
+  if (isLocked) {
+    cardEl.style.order = rem; // smaller rem = closer to top
+  } else if (isReady) {
+    cardEl.style.order = 9000000000000;
+  } else {
+    cardEl.style.order = 9999999999999;
+  }
 
   const badge = $(`badge-${i}`);
   if (badge) badge.className = `badge badge-${state}`;
@@ -377,12 +369,6 @@ function updateStats() {
   $('fc-ready').textContent  = nReady;
   $('total-count').textContent = accounts.length;
   accounts.forEach((_, i) => updateCard(i));
-  // Re-order card DOM nodes by unlock time (soonest locked first)
-  const grid = $('grid');
-  sortedIndices().forEach(i => {
-    const el = $('card-' + i);
-    if (el) grid.appendChild(el);
-  });
 }
 
 // ── Add Account Modal ─────────────────────────────────────

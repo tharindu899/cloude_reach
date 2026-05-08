@@ -332,7 +332,8 @@ body::after {
 }
 
 /* ── Card grid ────────────────────────────────────────── */
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+.grid { display: flex; flex-wrap: wrap; gap: 16px; }
+.grid .card { flex: 1 1 300px; min-width: 0; }
 
 /* ── Account card ─────────────────────────────────────── */
 .card {
