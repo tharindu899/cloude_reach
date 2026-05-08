@@ -83,35 +83,7 @@ body::after {
   padding: 32px 20px 64px;
 }
 
-/* ── Header ───────────────────────────────────────────── */
-header {
-  text-align: center;
-  margin-bottom: 28px;
-  animation: fadeDown 0.6s 0.1s ease both;
-}
 
-.logo-row { display: flex; align-items: center; justify-content: center; }
-
-h1 {
-  font-size: 28px;
-  font-weight: 800;
-  background: linear-gradient(135deg, #fff 0%, var(--accent2) 60%, var(--green) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  letter-spacing: -0.5px;
-}
-
-.subtitle {
-  font-size: 12px;
-  color: var(--muted2);
-  font-family: var(--mono);
-  letter-spacing: 0.5px;
-  margin-top: 6px;
-}
-.subtitle span { color: var(--accent2); }
-
-/* ── Navbar ────────────────────────────────────────────── */
 /* ── Navbar ─────────────────────────────────────────────── */
 .navbar {
   position: sticky;
@@ -123,9 +95,9 @@ h1 {
   justify-content: space-between;
   gap: 0;
   padding: 0 20px;
-  height: 56px;
+  height: 60px;
   margin: -32px -20px 32px;
-  background: rgba(7,7,15,0.92);
+  background: rgba(7,7,15,0.95);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border-bottom: 1px solid var(--border);
@@ -136,21 +108,28 @@ h1 {
 .nav-brand {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 10px;
   flex-shrink: 0;
   text-decoration: none;
+  min-width: 0;
 }
 .nav-gem {
-  width: 28px; height: 28px;
-  min-width: 28px; max-width: 28px;
+  width: 30px; height: 30px;
+  min-width: 30px; max-width: 30px;
   flex-shrink: 0;
   overflow: hidden;
   display: flex; align-items: center; justify-content: center;
 }
 .nav-gem svg {
   display: block;
-  width: 28px !important; height: 28px !important;
+  width: 30px !important; height: 30px !important;
   filter: drop-shadow(0 0 8px var(--accent-glow));
+}
+.nav-brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
 }
 .nav-title {
   font-size: 14px;
@@ -159,56 +138,18 @@ h1 {
   font-family: var(--sans);
   letter-spacing: -0.3px;
   white-space: nowrap;
+  line-height: 1;
 }
 .nav-title span { color: var(--accent2); }
-
-/* ── Center reset pill ── */
-.nav-center {
-  flex: 1 1 auto;
-  display: flex;
-  justify-content: center;
-  padding: 0 12px;
-  min-width: 0;
-}
-.config-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  background: var(--glass);
-  border: 1px solid var(--border2);
-  border-radius: 50px;
-  padding: 6px 14px;
-  backdrop-filter: blur(10px);
-  white-space: nowrap;
-}
-.config-pill svg { color: var(--muted2); opacity: 0.6; flex-shrink: 0; }
-.config-pill label {
+.nav-meta {
   font-size: 10px;
-  color: var(--muted2);
+  color: var(--muted);
   font-family: var(--mono);
   white-space: nowrap;
-  cursor: pointer;
+  letter-spacing: 0.3px;
+  line-height: 1;
 }
-.pill-unit {
-  font-size: 10px;
-  color: var(--muted2);
-  font-family: var(--mono);
-}
-.config-pill input[type="number"] {
-  width: 42px;
-  background: rgba(139,92,246,0.14);
-  border: 1px solid rgba(139,92,246,0.35);
-  border-radius: 7px;
-  color: var(--amber);
-  font-family: var(--mono);
-  font-size: 13px;
-  font-weight: 700;
-  padding: 3px 5px;
-  text-align: center;
-  outline: none;
-  transition: border-color 0.2s;
-}
-.config-pill input[type="number"]:focus { border-color: var(--accent); }
+.nav-meta span { color: var(--accent2); }
 
 /* ── Action buttons ── */
 .nav-actions {
@@ -1050,7 +991,6 @@ footer span { color: var(--accent2); }
 
 /* ── Responsive ───────────────────────────────────────── */
 @media (max-width: 640px) {
-  h1 { font-size: 22px; }
   .stats-row { grid-template-columns: repeat(3, 1fr); gap: 6px; }
   .stat-card { padding: 12px 8px; }
   .stat-num  { font-size: 20px; }
@@ -1060,12 +1000,11 @@ footer span { color: var(--accent2); }
   .modal { width: calc(100vw - 24px); }
   .modal-footer-3 { flex-wrap: wrap; }
 
-  /* Navbar: hide center pill, keep brand + icon buttons */
-  .navbar { padding: 0 16px; height: 52px; margin: -32px -16px 28px; }
-  .nav-center { display: none; }
-  .nav-title { display: none; }
+  /* Navbar */
+  .navbar { padding: 0 16px; height: 56px; margin: -32px -16px 28px; }
+  .nav-meta { display: none; }
 
-  /* Icon-only circle buttons — equal size */
+  /* Icon-only circle buttons */
   .nav-actions { gap: 10px; }
   .nav-btn {
     width: 36px; height: 36px;
@@ -1074,42 +1013,11 @@ footer span { color: var(--accent2); }
     flex-shrink: 0;
   }
   .nav-btn-label { display: none; }
-  .sync-badge { display: none; }          /* hide ○ dot inside icon circle */
+  .sync-badge { display: none; }
 
-  /* Reset hrs strip below navbar */
-  .app-wrapper::before {
-    content: '';
-    display: block;
-  }
-
-  /* Button row: flex so all 3 always in one line */
+  /* Button row */
   .btn-row { display: flex; flex-direction: row; gap: 6px; }
   .btn-row .btn { flex: 1; min-width: 0; font-size: 10px; padding: 9px 4px; }
-}
-
-/* ── Mobile-only reset strip ──────────────────────────── */
-/* Shown only on mobile since nav-center is hidden there  */
-@media (max-width: 640px) {
-  .nav-center {
-    display: flex !important;
-    position: sticky;
-    top: 52px;
-    z-index: 490;
-    width: calc(100% + 32px);
-    margin: 0 -16px 20px;
-    padding: 8px 16px;
-    background: rgba(7,7,15,0.88);
-    backdrop-filter: blur(16px);
-    border-bottom: 1px solid var(--border);
-    justify-content: center;
-  }
-  .config-pill {
-    width: 100%;
-    max-width: 260px;
-    justify-content: center;
-    border-radius: 10px;
-  }
-  .config-pill label { display: inline; }   /* re-show "Reset" label in strip */
 }
 
 /* ── Scrollbar ────────────────────────────────────────── */

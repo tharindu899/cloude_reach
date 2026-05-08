@@ -8,14 +8,14 @@
 
 const {
   appName, defaultResetHours, holdMs,
-  storageKey, resetStorageKey,
+  storageKey,
   jbinKeyStore, jbinIdStore, jbinBase,
 } = CONFIG;
 
 // ── Runtime state ────────────────────────────────────────
 let accounts     = [];          // loaded from cloud
 let activeFilter = 'all';
-let resetHours   = parseFloat(localStorage.getItem(resetStorageKey) || defaultResetHours);
+const resetHours = defaultResetHours;
 let syncTimer    = null;
 let syncStatus   = 'idle';
 let isBooting    = true;
@@ -246,7 +246,6 @@ function buildCards() {
   const grid = $('grid');
   grid.innerHTML = '';
   $('total-count').textContent = accounts.length;
-  $('resetHours').value        = resetHours;
 
   accounts.forEach((acc, i) => {
     const card = document.createElement('div');
@@ -468,7 +467,6 @@ async function handleSetupPull() {
   if (!data) { showToast('Pull failed', 'red'); return; }
   if (data.accounts && Array.isArray(data.accounts)) {
     accounts = data.accounts;
-    if (data.resetHours) { resetHours = data.resetHours; }
     buildCards(); updateStats();
     showToast('Pulled from cloud ✓', 'green');
     closeSetupModal();
@@ -531,13 +529,6 @@ function setupPWA() {
 // ── Boot ──────────────────────────────────────────────────
 setupPWA();
 
-// Wire controls
-$('resetHours').addEventListener('change', e => {
-  resetHours = parseFloat(e.target.value) || defaultResetHours;
-  localStorage.setItem(resetStorageKey, resetHours);
-  updateStats(); schedulePush();
-});
-
 document.querySelectorAll('.filter-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -590,7 +581,6 @@ if (jbinKey() && jbinId()) {
     if (!data) return;
     if (data.accounts && Array.isArray(data.accounts)) {
       accounts = data.accounts;
-      if (data.resetHours) { resetHours = data.resetHours; $('resetHours').value = resetHours; }
       buildCards(); updateStats();
     }
   });

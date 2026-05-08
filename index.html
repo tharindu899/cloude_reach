@@ -16,15 +16,6 @@
 
 <div class="app-wrapper">
 
-  <!-- Header -->
-  <header>
-    <div class="logo-row">
-      <div class="logo-text">
-        <p class="subtitle"><span id="total-count">0</span> accounts · <span id="live-clock">--:--:--</span></p>
-      </div>
-    </div>
-  </header>
-
   <!-- Nav Bar -->
   <nav class="navbar">
     <div class="nav-brand">
@@ -35,15 +26,9 @@
           <defs><filter id="ngf"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
         </svg>
       </div>
-      <span class="nav-title">Claude<span>Tracker</span></span>
-    </div>
-
-    <div class="nav-center">
-      <div class="config-pill">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        <label for="resetHours">Reset</label>
-        <input type="number" id="resetHours" value="5" min="1" max="24" step="0.5">
-        <span class="pill-unit">hrs</span>
+      <div class="nav-brand-text">
+        <span class="nav-title">Claude<span>Tracker</span></span>
+        <span class="nav-meta"><span id="total-count">0</span> accounts · <span id="live-clock">--:--:--</span></span>
       </div>
     </div>
 
