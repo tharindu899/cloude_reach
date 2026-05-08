@@ -86,14 +86,18 @@ function setSyncStatus(s) {
   const el = $('sync-status');
   if (!el) return;
   const map = {
-    idle:    { text: '○ not configured', cls: 'ss-idle'    },
-    syncing: { text: '◌ syncing…',       cls: 'ss-syncing' },
-    ok:      { text: '● synced',         cls: 'ss-ok'      },
-    error:   { text: '● error',          cls: 'ss-error'   },
+    idle:    { text: '○', cls: 'ss-idle'    },
+    syncing: { text: '◌', cls: 'ss-syncing' },
+    ok:      { text: '●', cls: 'ss-ok'      },
+    error:   { text: '!', cls: 'ss-error'   },
   };
   const m = map[s] || map.idle;
   el.textContent = m.text;
   el.className   = `sync-badge ${m.cls}`;
+  // Update button title for accessibility
+  const btn = $('btn-cloud-setup');
+  const titles = { idle: 'Cloud Sync — not configured', syncing: 'Cloud Sync — syncing…', ok: 'Cloud Sync — synced', error: 'Cloud Sync — error' };
+  if (btn) btn.title = titles[s] || titles.idle;
 }
 
 async function pushToJBin() {

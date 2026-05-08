@@ -19,41 +19,47 @@
   <!-- Header -->
   <header>
     <div class="logo-row">
-      <div class="logo-gem">
-        <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <polygon points="24,2 44,16 44,32 24,46 4,32 4,16" fill="rgba(139,92,246,0.12)" stroke="rgba(139,92,246,0.55)" stroke-width="1.5"/>
-          <polygon points="24,8 38,18 38,30 24,40 10,30 10,18" fill="rgba(139,92,246,0.07)" stroke="rgba(139,92,246,0.25)" stroke-width="1"/>
-          <circle cx="24" cy="24" r="4" fill="#a78bfa" filter="url(#gf)"/>
-          <defs><filter id="gf"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
-        </svg>
-      </div>
       <div class="logo-text">
-        <h1>Claude Tracker</h1>
-        <p class="subtitle">free plan · <span id="total-count">0</span> accounts · <span id="live-clock">--:--:--</span></p>
+        <p class="subtitle"><span id="total-count">0</span> accounts · <span id="live-clock">--:--:--</span></p>
       </div>
     </div>
   </header>
 
-  <!-- Toolbar -->
-  <div class="toolbar">
-    <div class="config-pill">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-      <label for="resetHours">Reset</label>
-      <input type="number" id="resetHours" value="5" min="1" max="24" step="0.5">
-      <span class="pill-unit">hrs</span>
+  <!-- Nav Bar -->
+  <nav class="navbar">
+    <div class="nav-brand">
+      <div class="nav-gem">
+        <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="24,2 44,16 44,32 24,46 4,32 4,16" fill="rgba(139,92,246,0.15)" stroke="rgba(139,92,246,0.6)" stroke-width="1.5"/>
+          <circle cx="24" cy="24" r="4" fill="#a78bfa" filter="url(#ngf)"/>
+          <defs><filter id="ngf"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+        </svg>
+      </div>
+      <span class="nav-title">Claude<span>Tracker</span></span>
     </div>
 
-    <button class="toolbar-btn btn-cloud" id="btn-cloud-setup">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
-      Cloud Sync
-      <span class="sync-badge ss-idle" id="sync-status">○ not configured</span>
-    </button>
+    <div class="nav-center">
+      <div class="config-pill">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <label for="resetHours">Reset</label>
+        <input type="number" id="resetHours" value="5" min="1" max="24" step="0.5">
+        <span class="pill-unit">hrs</span>
+      </div>
+    </div>
 
-    <button class="toolbar-btn btn-add" id="btn-add-account">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      Add Account
-    </button>
-  </div>
+    <div class="nav-actions">
+      <button class="nav-btn nav-btn-cloud" id="btn-cloud-setup" title="Cloud Sync">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+        <span class="nav-btn-label">Sync</span>
+        <span class="sync-badge ss-idle" id="sync-status">○</span>
+      </button>
+
+      <button class="nav-btn nav-btn-add" id="btn-add-account" title="Add Account">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span class="nav-btn-label">Add</span>
+      </button>
+    </div>
+  </nav>
 
   <!-- Stats row -->
   <div class="stats-row">
