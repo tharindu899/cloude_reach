@@ -8,12 +8,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="ClaudeTrack">
-
-  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-
-  <!-- Styles -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -43,6 +39,52 @@
       </label>
       <input type="number" id="resetHours" value="5" min="1" max="24" step="0.5">
       <label for="resetHours">hrs / cycle</label>
+    </div>
+
+    <!-- Cloud sync toggle -->
+    <button class="config-pill sync-toggle-btn" id="sync-toggle">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px">
+        <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
+      </svg>
+      Cloud Sync
+      <span class="sync-status-badge ss-idle" id="sync-status">not configured</span>
+    </button>
+  </div>
+
+  <!-- Sync panel (hidden by default) -->
+  <div id="sync-panel" class="sync-panel" style="display:none">
+    <div class="sync-panel-inner">
+      <div class="sync-header">
+        <span class="sync-title">☁️ JSONBin Cloud Sync</span>
+        <a href="https://jsonbin.io" target="_blank" rel="noopener" class="sync-link">Get free API key ↗</a>
+      </div>
+      <p class="sync-desc">
+        Lock times sync across all your devices. Sign up at <strong>jsonbin.io</strong> → copy your <strong>Master Key</strong> → paste below. Leave Bin ID empty on first setup — it'll be created automatically.
+      </p>
+      <div class="sync-fields">
+        <div class="sync-field">
+          <label class="input-label">Master Key (secret key)</label>
+          <input type="password" id="jbin-key-input" class="time-input" placeholder="$2a$10$…" autocomplete="off">
+        </div>
+        <div class="sync-field">
+          <label class="input-label">Bin ID (auto-filled after first save)</label>
+          <input type="text" id="jbin-id-input" class="time-input" placeholder="64abc123def…" autocomplete="off">
+        </div>
+      </div>
+      <div class="sync-btn-row">
+        <button class="btn btn-lock-now" id="sync-save-btn" style="flex:2">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Save &amp; Enable
+        </button>
+        <button class="btn btn-set-lock" id="sync-pull-btn" style="flex:1.5">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/></svg>
+          Pull Now
+        </button>
+        <button class="btn btn-free" id="sync-clear-btn" style="flex:1">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          Disable
+        </button>
+      </div>
     </div>
   </div>
 
@@ -93,9 +135,7 @@
 
 <div class="toast" id="toast"></div>
 
-<!-- config must load before app -->
 <script src="config.js"></script>
 <script src="app.js"></script>
-
 </body>
 </html>
