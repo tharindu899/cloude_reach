@@ -8,12 +8,10 @@ const CONFIG = {
   appName:    'Claude Tracker',
   appTagline: 'free plan',
 
-  defaultResetHours: 5,
   holdMs: 750,
 
   // LocalStorage keys (only for non-sensitive UI state)
-  storageKey:      'clt_v8',
-  resetStorageKey: 'clt_reset_v4',
+  storageKey: 'clt_v8',
 
   // JSONBin storage keys
   jbinKeyStore: 'clt_jbin_key',

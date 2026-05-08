@@ -483,21 +483,50 @@ body::after {
 /* Inputs */
 .input-label { font-size: 10px; color: var(--muted2); font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: block; }
 
+/* ── Time input (modern, time-only) ── */
+.time-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.time-input-icon {
+  position: absolute;
+  left: 11px;
+  display: flex;
+  align-items: center;
+  color: var(--accent2);
+  pointer-events: none;
+  opacity: 0.7;
+  z-index: 1;
+}
+
 .time-input {
   width: 100%;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid var(--border2);
+  background: rgba(139,92,246,0.06);
+  border: 1px solid rgba(139,92,246,0.25);
   border-radius: var(--radius-sm);
   color: var(--text);
   font-family: var(--mono);
-  font-size: 11px;
-  padding: 8px 10px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  padding: 10px 12px 10px 34px;
   outline: none;
-  margin-bottom: 10px;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
   color-scheme: dark;
 }
-.time-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+.time-input:focus {
+  border-color: var(--accent);
+  background: rgba(139,92,246,0.1);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+.time-input::-webkit-calendar-picker-indicator {
+  filter: invert(0.7) sepia(1) hue-rotate(220deg) saturate(2);
+  cursor: pointer;
+  opacity: 0.6;
+}
+.time-input::-webkit-calendar-picker-indicator:hover { opacity: 1; }
 
 .notes-input {
   width: 100%;
@@ -529,6 +558,7 @@ body::after {
 }
 
 .btn-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.btn-row-2 { grid-template-columns: 1fr 1fr; }
 
 .btn {
   font-family: var(--sans);

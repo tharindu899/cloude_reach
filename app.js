@@ -7,7 +7,7 @@
 'use strict';
 
 const {
-  appName, defaultResetHours, holdMs,
+  appName, holdMs,
   storageKey,
   jbinKeyStore, jbinIdStore, jbinBase,
 } = CONFIG;
@@ -15,7 +15,6 @@ const {
 // ── Runtime state ────────────────────────────────────────
 let accounts     = [];          // loaded from cloud
 let activeFilter = 'all';
-const resetHours = defaultResetHours;
 let syncTimer    = null;
 let syncStatus   = 'idle';
 let isBooting    = true;
@@ -42,10 +41,10 @@ function fmtCountdown(ms) {
   const s = Math.floor((ms % 60000) / 1000);
   return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 }
-function tsToLocal(ts) {
+function tsToLocalTime(ts) {
   const d = new Date(ts || Date.now());
   const p = n => String(n).padStart(2,'0');
-  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+  return `${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 function esc(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
@@ -224,13 +223,15 @@ function cardHTML(acc, i) {
     </div>
     <div class="sep"></div>
     <label class="input-label">Set unlock time</label>
-    <input class="time-input" type="datetime-local" id="tp-${i}" value="${tsToLocal(Date.now())}">
+    <div class="time-input-wrap">
+      <span class="time-input-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </span>
+      <input class="time-input" type="time" id="tp-${i}" value="${tsToLocalTime()}">
+    </div>
     <textarea class="notes-input" id="notes-${i}" placeholder="Notes…">${esc(acc.notes || '')}</textarea>
     <div class="hold-hint">hold buttons to confirm</div>
-    <div class="btn-row">
-      <button class="btn btn-lock-now" id="btn-now-${i}">
-        <div class="btn-hold-fill"></div>${ICONS.bolt} Lock Now
-      </button>
+    <div class="btn-row btn-row-2">
       <button class="btn btn-set-lock" id="btn-lock-${i}">
         <div class="btn-hold-fill"></div>${ICONS.lock} Set Lock
       </button>
@@ -268,22 +269,22 @@ function buildCards() {
       accounts[i].notes = e.target.value; save();
     });
 
-    makeHoldButton($(`btn-now-${i}`), () => {
-      const unlockTs = Date.now() + resetHours * 3600000;
-      accounts[i] = { ...accounts[i], locked: true, lockTime: Date.now(), unlockTime: unlockTs };
-      $(`tp-${i}`).value = tsToLocal(unlockTs);
-      save(); updateStats();
-      showToast(`${acc.name} locked for ${resetHours}h`, 'red');
-    });
-
     makeHoldButton($(`btn-lock-${i}`), () => {
       const picker   = $(`tp-${i}`);
-      const unlockTs = picker?.value ? new Date(picker.value).getTime() : null;
-      if (!unlockTs || isNaN(unlockTs)) { showToast('Pick a valid unlock time', 'red'); return; }
-      if (unlockTs <= Date.now())        { showToast('Unlock time must be in the future', 'red'); return; }
+      const timeVal  = picker?.value; // "HH:MM"
+      if (!timeVal) { showToast('Pick a valid unlock time', 'red'); return; }
+      const [h, m] = timeVal.split(':').map(Number);
+      const target = new Date();
+      target.setSeconds(0, 0);
+      target.setHours(h, m);
+      if (target.getTime() <= Date.now()) {
+        target.setDate(target.getDate() + 1); // auto tomorrow
+      }
+      const unlockTs = target.getTime();
       accounts[i] = { ...accounts[i], locked: true, lockTime: Date.now(), unlockTime: unlockTs };
       save(); updateStats();
-      showToast(`${acc.name} locked until ${fmtTime(unlockTs)}`, 'red');
+      const isNextDay = target.getDate() !== new Date().getDate();
+      showToast(`${acc.name} locked until ${fmtTime(unlockTs)}${isNextDay ? ' (tomorrow)' : ''}`, 'red');
     });
 
     makeHoldButton($(`btn-unlock-${i}`), () => {
