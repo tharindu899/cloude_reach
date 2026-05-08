@@ -125,38 +125,26 @@ h1 {
   justify-content: center;
   gap: 12px;
   margin-bottom: 28px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap; /* force single row */
   animation: fadeUp 0.6s 0.1s ease both;
 }
 
+/* Reset pill (icon + input + hrs) */
 .config-pill {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   background: var(--glass);
   border: 1px solid var(--border2);
   border-radius: 50px;
-  padding: 10px 18px;
+  padding: 10px 14px;
   backdrop-filter: blur(10px);
 }
 
 .config-pill svg { color: var(--muted2); opacity: 0.6; flex-shrink: 0; }
 
-.config-pill label {
-  font-size: 11px;
-  color: var(--muted2);
-  font-family: var(--mono);
-  white-space: nowrap;
-}
-
-.pill-unit {
-  font-size: 11px;
-  color: var(--muted2);
-  font-family: var(--mono);
-}
-
 .config-pill input[type="number"] {
-  width: 58px;
+  width: 52px;
   background: rgba(139,92,246,0.12);
   border: 1px solid rgba(139,92,246,0.3);
   border-radius: 8px;
@@ -171,15 +159,21 @@ h1 {
 }
 .config-pill input[type="number"]:focus { border-color: var(--accent); }
 
+.pill-unit {
+  font-size: 11px;
+  color: var(--muted2);
+  font-family: var(--mono);
+}
+
 /* ── Toolbar buttons ──────────────────────────────────── */
 .toolbar-btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  gap: 6px;
   font-family: var(--sans);
-  font-size: 12px;
-  font-weight: 600;
-  padding: 10px 16px;
+  font-size: 0;                    /* hide inner text if any */
+  padding: 10px;
   border-radius: 50px;
   border: 1px solid var(--border2);
   background: var(--glass);
@@ -189,20 +183,28 @@ h1 {
   transition: all 0.2s;
   white-space: nowrap;
 }
-.toolbar-btn:hover { background: var(--surface-hover); }
 
-.btn-cloud { color: var(--accent2); border-color: rgba(139,92,246,0.3); }
+/* Cloud sync button: keep pill shape to fit badge */
+.btn-cloud {
+  color: var(--accent2);
+  border-color: rgba(139,92,246,0.3);
+  padding: 8px 14px;
+}
 .btn-cloud:hover { background: var(--accent-dim); box-shadow: 0 0 16px var(--accent-glow); }
 
+/* Add account button: circle icon */
 .btn-add {
   background: linear-gradient(135deg, var(--accent) 0%, #6d28d9 100%);
   border-color: transparent;
   color: #fff;
   box-shadow: 0 4px 16px rgba(139,92,246,0.35);
+  border-radius: 50%;               /* circle */
+  width: 42px; height: 42px;
+  padding: 10px;
 }
 .btn-add:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(139,92,246,0.45); }
 
-/* ── Sync badge ───────────────────────────────────────── */
+/* Sync badge stays visible */
 .sync-badge {
   font-family: var(--mono);
   font-size: 9px;
@@ -341,7 +343,7 @@ h1 {
 }
 .card:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,0.4); }
 
-/* FIX: card-top-bar (referenced in JS cardHTML) = top accent line */
+/* Top accent line */
 .card-top-bar {
   position: absolute;
   top: 0; left: 0; right: 0;
@@ -353,7 +355,6 @@ h1 {
 .card.locked .card-top-bar { background: var(--red);   box-shadow: 0 0 12px var(--red-glow); }
 .card.ready  .card-top-bar { background: var(--amber); box-shadow: 0 0 12px var(--amber-glow); }
 
-/* Keep legacy .card-glow too for compat */
 .card-glow {
   position: absolute;
   top: 0; left: 0; right: 0;
@@ -513,38 +514,44 @@ h1 {
 /* ── Hold-to-confirm buttons ──────────────────────────── */
 .hold-hint {
   text-align: center;
-  font-size: 9px;
+  font-size: 8px;
   font-family: var(--mono);
   color: var(--muted);
   letter-spacing: 0.5px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   opacity: 0.6;
 }
 
-.btn-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+/* Icon-only button row (horizontal) */
+.btn-row {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
 
+/* Base button (circles for icon-only) */
 .btn {
   font-family: var(--sans);
-  font-size: 11px;
-  font-weight: 600;
-  padding: 9px 6px;
-  border-radius: var(--radius-sm);
+  font-size: 0;                     /* hide text */
+  padding: 8px;
+  border-radius: 50%;
+  width: 38px; height: 38px;
   cursor: pointer;
   border: 1px solid transparent;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
   position: relative;
   overflow: hidden;
   user-select: none;
   -webkit-user-select: none;
   touch-action: none;
-  transition: opacity 0.15s;
+  transition: opacity 0.15s, transform 0.2s;
   -webkit-tap-highlight-color: transparent;
 }
 .btn:disabled { opacity: 0.25; cursor: not-allowed; }
 
+/* Hold fill animation */
 .btn-hold-fill {
   position: absolute; inset: 0;
   width: 0%;
@@ -555,6 +562,7 @@ h1 {
 }
 .btn.holding .btn-hold-fill { width: 100%; transition: width 0.75s linear; }
 
+/* Specific button colors */
 .btn-lock-now { background: var(--accent-dim); color: var(--accent2); border-color: rgba(139,92,246,0.25); }
 .btn-lock-now:not(:disabled):hover { background: rgba(139,92,246,0.2); box-shadow: 0 0 16px rgba(139,92,246,0.2); }
 
@@ -626,7 +634,7 @@ footer {
 footer span { color: var(--accent2); }
 
 /* ═══════════════════════════════════════════════════════
-   MODAL SYSTEM (was entirely missing)
+   MODAL SYSTEM
    ═══════════════════════════════════════════════════════ */
 .modal-backdrop {
   position: fixed; inset: 0;
@@ -637,33 +645,13 @@ footer span { color: var(--accent2); }
   pointer-events: none;
   transition: opacity 0.25s;
 }
-.modal-backdrop + .modal.open ~ .modal-backdrop,
-#add-modal.open ~ #add-modal-overlay,
-#setup-modal.open ~ #setup-modal-overlay { opacity: 1; pointer-events: auto; }
 
-/* Show backdrop when its sibling modal is open */
-#add-modal-overlay   { display: none; }
-#setup-modal-overlay { display: none; }
-
-#add-modal.open   + * { /* handled below */ }
-/* Use JS .open class directly on backdrops via pairing */
-
-.modal-backdrop {
-  display: block;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.25s;
-}
-
-/* When any modal has .open, show the matching backdrop */
 #add-modal.open   { display: flex; animation: modalIn 0.3s ease both; }
 #setup-modal.open { display: flex; animation: modalIn 0.3s ease both; }
 
-/* Activate backdrop alongside open modal */
 #add-modal.open   ~ #add-modal-overlay,
 #setup-modal.open ~ #setup-modal-overlay { opacity: 1 !important; pointer-events: auto !important; }
 
-/* Reorder so overlay appears behind modal but above page */
 #add-modal-overlay,
 #setup-modal-overlay {
   position: fixed; inset: 0;
@@ -990,12 +978,11 @@ footer span { color: var(--accent2); }
   .stat-num  { font-size: 20px; }
   .stat-icon { font-size: 14px; }
   .grid { grid-template-columns: 1fr; }
-  .toolbar { flex-direction: column; }
+  .toolbar { flex-direction: row; gap: 8px; }  /* keep row on mobile */
+  .config-pill { padding: 8px 10px; }
   .cd-timer { font-size: 22px; }
   .modal { width: calc(100vw - 24px); }
   .modal-footer-3 { flex-wrap: wrap; }
-  .btn-row { grid-template-columns: 1fr 1fr; }
-  .btn-free { grid-column: 1 / -1; }
 }
 
 /* ── Scrollbar ────────────────────────────────────────── */
