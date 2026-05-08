@@ -112,6 +112,7 @@ h1 {
 .subtitle span { color: var(--accent2); }
 
 /* ── Navbar ────────────────────────────────────────────── */
+/* ── Navbar ─────────────────────────────────────────────── */
 .navbar {
   position: sticky;
   top: 0;
@@ -120,30 +121,31 @@ h1 {
   flex-wrap: nowrap;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding: 10px 16px;
+  gap: 0;
+  padding: 0 20px;
+  height: 56px;
   margin: -32px -20px 32px;
   background: rgba(7,7,15,0.92);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border-bottom: 1px solid var(--border);
   animation: fadeDown 0.5s ease both;
-  overflow: hidden;
 }
 
-/* brand */
+/* ── Brand ── */
 .nav-brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 9px;
   flex-shrink: 0;
+  text-decoration: none;
 }
 .nav-gem {
   width: 28px; height: 28px;
   min-width: 28px; max-width: 28px;
-  min-height: 28px; max-height: 28px;
   flex-shrink: 0;
   overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
 }
 .nav-gem svg {
   display: block;
@@ -151,28 +153,32 @@ h1 {
   filter: drop-shadow(0 0 8px var(--accent-glow));
 }
 .nav-title {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
   color: var(--muted2);
   font-family: var(--sans);
   letter-spacing: -0.3px;
+  white-space: nowrap;
 }
 .nav-title span { color: var(--accent2); }
 
-/* center pill */
-.nav-center { flex: 1 1 auto; min-width: 0; display: flex; justify-content: center; }
-
-.config-pill {
+/* ── Center reset pill ── */
+.nav-center {
+  flex: 1 1 auto;
   display: flex;
+  justify-content: center;
+  padding: 0 12px;
+  min-width: 0;
+}
+.config-pill {
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   background: var(--glass);
   border: 1px solid var(--border2);
   border-radius: 50px;
-  padding: 7px 12px;
+  padding: 6px 14px;
   backdrop-filter: blur(10px);
-  flex-shrink: 1;
-  min-width: 0;
   white-space: nowrap;
 }
 .config-pill svg { color: var(--muted2); opacity: 0.6; flex-shrink: 0; }
@@ -181,6 +187,7 @@ h1 {
   color: var(--muted2);
   font-family: var(--mono);
   white-space: nowrap;
+  cursor: pointer;
 }
 .pill-unit {
   font-size: 10px;
@@ -188,33 +195,41 @@ h1 {
   font-family: var(--mono);
 }
 .config-pill input[type="number"] {
-  width: 48px;
-  background: rgba(139,92,246,0.12);
-  border: 1px solid rgba(139,92,246,0.3);
+  width: 42px;
+  background: rgba(139,92,246,0.14);
+  border: 1px solid rgba(139,92,246,0.35);
   border-radius: 7px;
   color: var(--amber);
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
-  padding: 4px 6px;
+  padding: 3px 5px;
   text-align: center;
   outline: none;
   transition: border-color 0.2s;
 }
 .config-pill input[type="number"]:focus { border-color: var(--accent); }
 
-/* action buttons */
-.nav-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+/* ── Action buttons ── */
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
 
+/* Both buttons: equal square pill shape */
 .nav-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  gap: 5px;
   font-family: var(--sans);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
-  padding: 8px 14px;
-  border-radius: 50px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 18px;
   border: 1px solid var(--border2);
   background: var(--glass);
   cursor: pointer;
@@ -222,29 +237,32 @@ h1 {
   transition: all 0.2s;
   white-space: nowrap;
   letter-spacing: 0.2px;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .nav-btn-cloud {
   color: var(--accent2);
-  border-color: rgba(139,92,246,0.3);
+  border-color: rgba(139,92,246,0.35);
 }
-.nav-btn-cloud:hover {
+.nav-btn-cloud:hover,
+.nav-btn-cloud:active {
   background: var(--accent-dim);
-  box-shadow: 0 0 18px var(--accent-glow);
+  box-shadow: 0 0 16px var(--accent-glow);
 }
 
 .nav-btn-add {
   background: linear-gradient(135deg, var(--accent) 0%, #5b21b6 100%);
   border-color: transparent;
   color: #fff;
-  box-shadow: 0 3px 14px rgba(139,92,246,0.4);
+  box-shadow: 0 2px 12px rgba(139,92,246,0.45);
 }
-.nav-btn-add:hover {
+.nav-btn-add:hover,
+.nav-btn-add:active {
   transform: translateY(-1px);
-  box-shadow: 0 6px 22px rgba(139,92,246,0.5);
+  box-shadow: 0 5px 20px rgba(139,92,246,0.55);
 }
 
-.nav-btn-label { font-size: 11px; }
+.nav-btn-label { font-size: 11px; font-weight: 700; }
 
 /* ── Sync badge ───────────────────────────────────────── */
 .sync-badge {
@@ -1042,37 +1060,56 @@ footer span { color: var(--accent2); }
   .modal { width: calc(100vw - 24px); }
   .modal-footer-3 { flex-wrap: wrap; }
 
-  /* ── Navbar mobile fixes ── */
-  .navbar { gap: 6px; padding: 8px 12px; margin: -32px -16px 32px; }
+  /* Navbar: hide center pill, keep brand + icon buttons */
+  .navbar { padding: 0 16px; height: 52px; margin: -32px -16px 28px; }
+  .nav-center { display: none; }
   .nav-title { display: none; }
-  .nav-center { display: none; }          /* hide reset pill — use it below cards if needed */
-  .nav-actions { gap: 6px; }
-  .nav-btn-label { display: none; }
-  .nav-btn { padding: 8px 10px; }
-  .config-pill label { display: none; }
 
-  /* ── Button row ── */
+  /* Icon-only circle buttons — equal size */
+  .nav-actions { gap: 10px; }
+  .nav-btn {
+    width: 36px; height: 36px;
+    padding: 0;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .nav-btn-label { display: none; }
+  .sync-badge { display: none; }          /* hide ○ dot inside icon circle */
+
+  /* Reset hrs strip below navbar */
+  .app-wrapper::before {
+    content: '';
+    display: block;
+  }
+
+  /* Button row: flex so all 3 always in one line */
   .btn-row { display: flex; flex-direction: row; gap: 6px; }
-  .btn-row .btn { flex: 1; min-width: 0; font-size: 10px; padding: 8px 4px; }
+  .btn-row .btn { flex: 1; min-width: 0; font-size: 10px; padding: 9px 4px; }
 }
 
-/* ── Mobile reset strip ───────────────────────────────── */
+/* ── Mobile-only reset strip ──────────────────────────── */
+/* Shown only on mobile since nav-center is hidden there  */
 @media (max-width: 640px) {
-  /* Re-show the config pill as a full-width strip under the navbar */
   .nav-center {
     display: flex !important;
-    order: 10;
-    width: 100%;
-    margin: 6px 0 0;
+    position: sticky;
+    top: 52px;
+    z-index: 490;
+    width: calc(100% + 32px);
+    margin: 0 -16px 20px;
+    padding: 8px 16px;
+    background: rgba(7,7,15,0.88);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
     justify-content: center;
   }
   .config-pill {
     width: 100%;
+    max-width: 260px;
     justify-content: center;
     border-radius: 10px;
   }
-  /* Wrap the navbar to allow the pill to drop to second row */
-  .navbar { flex-wrap: wrap; align-items: center; }
+  .config-pill label { display: inline; }   /* re-show "Reset" label in strip */
 }
 
 /* ── Scrollbar ────────────────────────────────────────── */
