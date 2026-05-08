@@ -189,7 +189,7 @@ const ICONS = {
   key:      `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>`,
 };
 
-// ── Card HTML (icon-only buttons, minimal hold hint) ─────
+// ── Card HTML ─────────────────────────────────────────────
 function cardHTML(acc, i) {
   return `
     <div class="card-top-bar" id="glow-${i}"></div>
@@ -222,16 +222,16 @@ function cardHTML(acc, i) {
     <label class="input-label">Set unlock time</label>
     <input class="time-input" type="datetime-local" id="tp-${i}" value="${tsToLocal(Date.now())}">
     <textarea class="notes-input" id="notes-${i}" placeholder="Notes…">${esc(acc.notes || '')}</textarea>
-    <div class="hold-hint">hold to confirm</div>
+    <div class="hold-hint">hold buttons to confirm</div>
     <div class="btn-row">
-      <button class="btn btn-lock-now" id="btn-now-${i}" title="Lock now (hold)">
-        <div class="btn-hold-fill"></div>${ICONS.bolt}
+      <button class="btn btn-lock-now" id="btn-now-${i}">
+        <div class="btn-hold-fill"></div>${ICONS.bolt} Lock Now
       </button>
-      <button class="btn btn-set-lock" id="btn-lock-${i}" title="Set lock (hold)">
-        <div class="btn-hold-fill"></div>${ICONS.lock}
+      <button class="btn btn-set-lock" id="btn-lock-${i}">
+        <div class="btn-hold-fill"></div>${ICONS.lock} Set Lock
       </button>
-      <button class="btn btn-free" id="btn-unlock-${i}" title="Unlock (hold)" disabled>
-        <div class="btn-hold-fill"></div>${ICONS.lockOpen}
+      <button class="btn btn-free" id="btn-unlock-${i}" disabled>
+        <div class="btn-hold-fill"></div>${ICONS.lockOpen} Free
       </button>
     </div>
   `;
