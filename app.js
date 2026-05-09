@@ -406,12 +406,12 @@ function openLockModal(i) {
   const acc = accounts[i];
   $('lock-modal-name').textContent  = acc.name;
   $('lock-modal-email').textContent = acc.email;
-  // Reset all time pickers
+  // Reset time picker
   $('lock-hour').value = '';
   $('lock-min').value  = '';
-  $('type-time-input').value = '';
   const display = $('paste-time-display');
-  display.innerHTML = '<span class="paste-time-placeholder">-- : --</span>';
+  display.textContent = '';
+  display.dataset.empty = 'true';
   display.classList.remove('set');
   $('paste-time-area').classList.remove('has-time');
   $('lock-modal-hint').textContent = '';
@@ -681,28 +681,113 @@ $('lock-modal-overlay').addEventListener('click', closeLockModal);
 $('lock-modal-cancel').addEventListener('click', closeLockModal);
 $('lock-modal-confirm').addEventListener('click', handleLockConfirm);
 
-// ── Paste-only time helpers ───────────────────────────────
+// ── Time picker helpers ───────────────────────────────────
 function setPickedTime(h, m) {
   $('lock-hour').value = String(h).padStart(2, '0');
   $('lock-min').value  = String(m).padStart(2, '0');
   const display = $('paste-time-display');
-  display.innerHTML = `${String(h).padStart(2,'0')}<span style="opacity:.5;margin:0 4px">:</span>${String(m).padStart(2,'0')}`;
+  // Write plain text so contenteditable stays clean
+  display.textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
   display.classList.add('set');
   $('paste-time-area').classList.add('has-time');
-  // Keep the native input in sync
-  $('type-time-input').value = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
   updateLockHint();
 }
 
-// ── Native time input (typed) ─────────────────────────────
-$('type-time-input').addEventListener('change', e => {
-  const val = e.target.value; // "HH:MM"
-  if (!val) return;
-  const [h, m] = val.split(':').map(Number);
-  if (isNaN(h) || isNaN(m)) return;
-  setPickedTime(h, m);
-  showToast(`Time set: ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`, 'green');
-});
+function resetDisplay() {
+  const display = $('paste-time-display');
+  display.textContent = '';
+  display.classList.remove('set');
+  $('paste-time-area').classList.remove('has-time');
+}
+
+// ── contenteditable display: type directly ────────────────
+(function () {
+  const display = $('paste-time-display');
+
+  // Show placeholder via CSS ::before — set data-empty attribute
+  function syncEmpty() {
+    display.dataset.empty = display.textContent.trim() === '' ? 'true' : 'false';
+  }
+  syncEmpty();
+
+  display.addEventListener('focus', () => {
+    // If showing a set time, select all so user can retype easily
+    if (display.classList.contains('set')) {
+      const range = document.createRange();
+      range.selectNodeContents(display);
+      window.getSelection().removeAllRanges();
+      window.getSelection().addRange(range);
+    }
+  });
+
+  display.addEventListener('keydown', e => {
+    // Allow: digits, colon, backspace, delete, arrows, tab, enter
+    const allowed = ['Backspace','Delete','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Tab',':','Enter'];
+    if (!allowed.includes(e.key) && !/^\d$/.test(e.key)) {
+      e.preventDefault();
+      return;
+    }
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      display.blur();
+    }
+  });
+
+  display.addEventListener('input', () => {
+    syncEmpty();
+    let raw = display.textContent.replace(/[^0-9]/g, '');
+    if (raw.length > 4) raw = raw.slice(0, 4);
+
+    // Auto-colon after 2 digits
+    if (raw.length >= 3) {
+      const formatted = raw.slice(0, 2) + ':' + raw.slice(2);
+      // Only rewrite if different to avoid cursor jump
+      if (display.textContent !== formatted) {
+        display.textContent = formatted;
+        // Move caret to end
+        const range = document.createRange();
+        range.selectNodeContents(display);
+        range.collapse(false);
+        window.getSelection().removeAllRanges();
+        window.getSelection().addRange(range);
+      }
+    }
+
+    // If we have a full HH:MM, parse and confirm
+    const full = display.textContent.match(/^(\d{2}):(\d{2})$/);
+    if (full) {
+      const h = parseInt(full[1], 10), m = parseInt(full[2], 10);
+      if (h <= 23 && m <= 59) {
+        $('lock-hour').value = full[1];
+        $('lock-min').value  = full[2];
+        display.classList.add('set');
+        $('paste-time-area').classList.add('has-time');
+        updateLockHint();
+      }
+    } else {
+      display.classList.remove('set');
+      $('paste-time-area').classList.remove('has-time');
+      $('lock-hour').value = '';
+      $('lock-min').value  = '';
+      $('lock-modal-hint').textContent = '';
+    }
+    syncEmpty();
+  });
+
+  display.addEventListener('blur', () => {
+    const text = display.textContent.trim();
+    // If partially typed but invalid, clear
+    if (text && !text.match(/^\d{2}:\d{2}$/)) {
+      resetDisplay();
+      syncEmpty();
+    }
+    // If empty, ensure placeholder shows
+    if (!text) {
+      resetDisplay();
+      syncEmpty();
+    }
+  });
+})();
 
 // Now button
 $('btn-time-now').addEventListener('click', () => {

@@ -313,23 +313,9 @@
       <div class="paste-time-area" id="paste-time-area">
 
         <!-- Large time display -->
-        <div class="paste-time-display" id="paste-time-display">
-          <span class="paste-time-placeholder">-- : --</span>
-        </div>
-
-        <!-- ── NEW: native time input ── -->
-        <div class="type-time-wrap">
-          <span class="type-time-icon">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          </span>
-          <input
-            type="time"
-            id="type-time-input"
-            class="type-time-input"
-            title="Type a time directly"
-          >
-          <span class="type-time-label">type</span>
-        </div>
+        <div class="paste-time-display" id="paste-time-display"
+             contenteditable="true" spellcheck="false" inputmode="numeric"
+             aria-label="Enter unlock time (HH:MM)"></div>
 
         <div class="paste-time-actions">
           <button class="paste-action-btn paste-now-btn" id="btn-time-now" type="button">
