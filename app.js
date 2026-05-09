@@ -622,7 +622,44 @@ $('lock-modal-overlay').addEventListener('click', closeLockModal);
 $('lock-modal-cancel').addEventListener('click', closeLockModal);
 $('lock-modal-confirm').addEventListener('click', handleLockConfirm);
 
-// HH/MM arrow buttons
+// Time quick buttons — Now & Paste
+$('btn-time-now').addEventListener('click', () => {
+  const now = new Date();
+  $('lock-hour').value = String(now.getHours()).padStart(2, '0');
+  $('lock-min').value  = String(now.getMinutes()).padStart(2, '0');
+  updateLockHint();
+  const btn = $('btn-time-now');
+  btn.classList.add('flash-ok');
+  setTimeout(() => btn.classList.remove('flash-ok'), 800);
+});
+
+$('btn-time-paste').addEventListener('click', async () => {
+  const btn = $('btn-time-paste');
+  try {
+    const text = await navigator.clipboard.readText();
+    // Match HH:MM or H:MM (12h or 24h, with optional am/pm)
+    const m = text.trim().match(/(\d{1,2}):(\d{2})(?:\s*(am|pm))?/i);
+    if (!m) throw new Error('no time found');
+    let h = parseInt(m[1], 10);
+    const min = parseInt(m[2], 10);
+    const period = m[3] ? m[3].toLowerCase() : null;
+    if (period === 'pm' && h < 12) h += 12;
+    if (period === 'am' && h === 12) h = 0;
+    if (h < 0 || h > 23 || min < 0 || min > 59) throw new Error('out of range');
+    $('lock-hour').value = String(h).padStart(2, '0');
+    $('lock-min').value  = String(min).padStart(2, '0');
+    updateLockHint();
+    btn.classList.add('flash-ok');
+    showToast(`Time pasted: ${String(h).padStart(2,'0')}:${String(min).padStart(2,'0')}`, 'green');
+    setTimeout(() => btn.classList.remove('flash-ok'), 900);
+  } catch (e) {
+    btn.classList.add('flash-err');
+    showToast('No valid time in clipboard (e.g. 14:30 or 2:30 PM)', 'amber');
+    setTimeout(() => btn.classList.remove('flash-err'), 900);
+  }
+});
+
+
 function clampSet(id, min, max, delta) {
   const el = $(id);
   const cur = parseInt(el.value, 10) || 0;
