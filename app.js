@@ -408,12 +408,16 @@ function openLockModal(i) {
   const acc = accounts[i];
   $('lock-modal-name').textContent  = acc.name;
   $('lock-modal-email').textContent = acc.email;
-  const d = new Date();
-  $('lock-hour').value = String(d.getHours()).padStart(2, '0');
-  $('lock-min').value  = String(d.getMinutes()).padStart(2, '0');
-  updateLockHint();
+  // Reset paste display
+  $('lock-hour').value = '';
+  $('lock-min').value  = '';
+  const display = $('paste-time-display');
+  display.innerHTML = '<span class="paste-time-placeholder">-- : --</span>';
+  display.classList.remove('set');
+  $('paste-time-area').classList.remove('has-time');
+  $('lock-modal-hint').textContent = '';
+  $('lock-modal-hint').className = 'lock-date-hint hint-today';
   $('lock-modal').classList.add('open');
-  $('lock-hour').focus();
 }
 function closeLockModal() {
   $('lock-modal').classList.remove('open');
@@ -437,8 +441,12 @@ function handleLockConfirm() {
   if (i < 0) return;
   const h = parseInt($('lock-hour').value, 10);
   const m = parseInt($('lock-min').value,  10);
-  if (isNaN(h) || isNaN(m) || h < 0 || h > 23 || m < 0 || m > 59) {
-    showToast('Enter a valid time (0–23 h, 0–59 m)', 'red'); return;
+  if (isNaN(h) || isNaN(m)) {
+    showToast('Paste a time first', 'amber');
+    const btn = $('btn-time-paste');
+    btn.classList.add('flash-err');
+    setTimeout(() => btn.classList.remove('flash-err'), 800);
+    return;
   }
   const target = new Date(); target.setSeconds(0,0); target.setHours(h, m);
   if (target.getTime() <= Date.now()) target.setDate(target.getDate() + 1);
@@ -537,7 +545,71 @@ function handleSetupClear() {
   closeSetupModal();
 }
 
-// ── PWA ───────────────────────────────────────────────────
+// ── Theme Switcher ────────────────────────────────────────
+const THEMES = {
+  dark:     { icon: '🌙', label: 'Dark',     attr: ''          },
+  light:    { icon: '☀️',  label: 'Light',    attr: 'light'     },
+  midnight: { icon: '🌊', label: 'Midnight', attr: 'midnight'  },
+  forest:   { icon: '🌿', label: 'Forest',   attr: 'forest'    },
+  rose:     { icon: '🌸', label: 'Rose',     attr: 'rose'      },
+};
+
+let currentTheme = localStorage.getItem('clt_theme') || 'dark';
+let themePanelOpen = false;
+
+function applyTheme(name) {
+  currentTheme = name;
+  const t = THEMES[name] || THEMES.dark;
+  // Set data-theme attribute (empty = default dark)
+  if (t.attr) {
+    document.documentElement.setAttribute('data-theme', t.attr);
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+  }
+  localStorage.setItem('clt_theme', name);
+  // Update button
+  const icon = $('theme-icon'), lbl = document.getElementById('theme-label');
+  if (icon) icon.textContent = t.icon;
+  if (lbl)  lbl.textContent  = t.label;
+  // Update swatch active states
+  document.querySelectorAll('.theme-swatch').forEach(sw => {
+    sw.classList.toggle('active', sw.dataset.theme === name);
+  });
+}
+
+function toggleThemePanel() {
+  themePanelOpen = !themePanelOpen;
+  $('theme-panel').classList.toggle('open', themePanelOpen);
+}
+
+function closeThemePanel() {
+  themePanelOpen = false;
+  $('theme-panel').classList.remove('open');
+}
+
+// Apply saved theme on boot
+applyTheme(currentTheme);
+
+// Theme button
+$('btn-theme').addEventListener('click', e => { e.stopPropagation(); toggleThemePanel(); });
+
+// Swatch clicks
+document.querySelectorAll('.theme-swatch').forEach(sw => {
+  sw.addEventListener('click', () => {
+    applyTheme(sw.dataset.theme);
+    showToast(`${THEMES[sw.dataset.theme].icon} ${THEMES[sw.dataset.theme].label} theme`, 'purple');
+    closeThemePanel();
+  });
+});
+
+// Click outside to close panel
+document.addEventListener('click', e => {
+  if (themePanelOpen && !$('theme-panel').contains(e.target) && e.target !== $('btn-theme')) {
+    closeThemePanel();
+  }
+});
+
+────
 function setupPWA() {
   function generateIcon(size) {
     const canvas = document.createElement('canvas');
@@ -622,68 +694,50 @@ $('lock-modal-overlay').addEventListener('click', closeLockModal);
 $('lock-modal-cancel').addEventListener('click', closeLockModal);
 $('lock-modal-confirm').addEventListener('click', handleLockConfirm);
 
-// Time quick buttons — Now & Paste
+// ── Paste-only time helpers ───────────────────────────────
+function setPickedTime(h, m) {
+  $('lock-hour').value = String(h).padStart(2, '0');
+  $('lock-min').value  = String(m).padStart(2, '0');
+  const display = $('paste-time-display');
+  display.innerHTML = `${String(h).padStart(2,'0')}<span style="opacity:.5;margin:0 4px">:</span>${String(m).padStart(2,'0')}`;
+  display.classList.add('set');
+  $('paste-time-area').classList.add('has-time');
+  updateLockHint();
+}
+
+// Now button
 $('btn-time-now').addEventListener('click', () => {
   const now = new Date();
-  $('lock-hour').value = String(now.getHours()).padStart(2, '0');
-  $('lock-min').value  = String(now.getMinutes()).padStart(2, '0');
-  updateLockHint();
+  setPickedTime(now.getHours(), now.getMinutes());
   const btn = $('btn-time-now');
   btn.classList.add('flash-ok');
   setTimeout(() => btn.classList.remove('flash-ok'), 800);
 });
 
+// Paste button
 $('btn-time-paste').addEventListener('click', async () => {
   const btn = $('btn-time-paste');
   try {
     const text = await navigator.clipboard.readText();
-    // Match HH:MM or H:MM (12h or 24h, with optional am/pm)
     const m = text.trim().match(/(\d{1,2}):(\d{2})(?:\s*(am|pm))?/i);
-    if (!m) throw new Error('no time found');
+    if (!m) throw new Error('no time');
     let h = parseInt(m[1], 10);
     const min = parseInt(m[2], 10);
     const period = m[3] ? m[3].toLowerCase() : null;
     if (period === 'pm' && h < 12) h += 12;
     if (period === 'am' && h === 12) h = 0;
-    if (h < 0 || h > 23 || min < 0 || min > 59) throw new Error('out of range');
-    $('lock-hour').value = String(h).padStart(2, '0');
-    $('lock-min').value  = String(min).padStart(2, '0');
-    updateLockHint();
+    if (h < 0 || h > 23 || min < 0 || min > 59) throw new Error('range');
+    setPickedTime(h, min);
     btn.classList.add('flash-ok');
-    showToast(`Time pasted: ${String(h).padStart(2,'0')}:${String(min).padStart(2,'0')}`, 'green');
+    showToast(`Time set: ${String(h).padStart(2,'0')}:${String(min).padStart(2,'0')}`, 'green');
     setTimeout(() => btn.classList.remove('flash-ok'), 900);
   } catch (e) {
     btn.classList.add('flash-err');
-    showToast('No valid time in clipboard (e.g. 14:30 or 2:30 PM)', 'amber');
+    showToast('No valid time in clipboard', 'amber');
     setTimeout(() => btn.classList.remove('flash-err'), 900);
   }
 });
 
-
-function clampSet(id, min, max, delta) {
-  const el = $(id);
-  const cur = parseInt(el.value, 10) || 0;
-  el.value = String(Math.min(max, Math.max(min, cur + delta))).padStart(2, '0');
-  updateLockHint();
-}
-$('hm-hour-up').addEventListener('click', () => clampSet('lock-hour', 0, 23,  1));
-$('hm-hour-dn').addEventListener('click', () => clampSet('lock-hour', 0, 23, -1));
-$('hm-min-up').addEventListener('click',  () => clampSet('lock-min',  0, 59,  1));
-$('hm-min-dn').addEventListener('click',  () => clampSet('lock-min',  0, 59, -1));
-$('lock-hour').addEventListener('input', e => {
-  let v = e.target.value.replace(/\D/g, '').slice(0, 2);
-  if (v.length && parseInt(v, 10) > 23) v = '23';
-  e.target.value = v;
-  updateLockHint();
-});
-$('lock-min').addEventListener('input', e => {
-  let v = e.target.value.replace(/\D/g, '').slice(0, 2);
-  if (v.length && parseInt(v, 10) > 59) v = '59';
-  e.target.value = v;
-  updateLockHint();
-});
-$('lock-hour').addEventListener('keydown', e => { if (e.key === 'Enter') $('lock-min').focus(); });
-$('lock-min').addEventListener('keydown',  e => { if (e.key === 'Enter') handleLockConfirm(); });
 
 // Free modal
 $('free-modal-close').addEventListener('click', closeFreeModal);
