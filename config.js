@@ -7,6 +7,7 @@
 const CONFIG = {
   appName:    'Claude Tracker',
   appTagline: 'free plan',
+  appVersion: 'v1.0',          // ← change version here
 
   holdMs: 750,
 

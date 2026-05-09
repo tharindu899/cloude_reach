@@ -7,7 +7,7 @@
 'use strict';
 
 const {
-  appName, holdMs,
+  appName, appVersion, holdMs,
   storageKey,
   jbinKeyStore, jbinIdStore, jbinBase,
 } = CONFIG;
@@ -653,6 +653,10 @@ $('free-modal-close').addEventListener('click', closeFreeModal);
 $('free-modal-overlay').addEventListener('click', closeFreeModal);
 $('free-modal-cancel').addEventListener('click', closeFreeModal);
 $('free-modal-confirm').addEventListener('click', handleFreeConfirm);
+
+// Inject version from config
+const vEl = document.querySelector('.footer-version');
+if (vEl) vEl.textContent = appVersion || 'v1.0';
 
 // Initial render
 buildCards();
