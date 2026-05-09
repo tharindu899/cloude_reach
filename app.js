@@ -655,7 +655,7 @@ $('free-modal-cancel').addEventListener('click', closeFreeModal);
 $('free-modal-confirm').addEventListener('click', handleFreeConfirm);
 
 // Inject version from config
-const vEl = document.querySelector('.footer-version');
+const vEl = document.querySelector('.footer-version-val');
 if (vEl) vEl.textContent = appVersion || 'v1.0';
 
 // Initial render
