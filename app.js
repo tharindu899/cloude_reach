@@ -93,7 +93,6 @@ function setSyncStatus(s) {
   const m = map[s] || map.idle;
   el.textContent = m.text;
   el.className   = `sync-badge ${m.cls}`;
-  // Update button title for accessibility
   const btn = $('btn-cloud-setup');
   const titles = { idle: 'Cloud Sync — not configured', syncing: 'Cloud Sync — syncing…', ok: 'Cloud Sync — synced', error: 'Cloud Sync — error' };
   if (btn) btn.title = titles[s] || titles.idle;
@@ -290,9 +289,8 @@ function updateCard(i) {
   if (!cardEl) return;
   cardEl.className = `card${isLocked ? ' locked' : isReady ? ' ready' : ''}`;
 
-  // Sort order: locked (soonest first) → ready → active
   if (isLocked) {
-    cardEl.style.order = rem; // smaller rem = closer to top
+    cardEl.style.order = rem;
   } else if (isReady) {
     cardEl.style.order = 9000000000000;
   } else {
@@ -408,9 +406,10 @@ function openLockModal(i) {
   const acc = accounts[i];
   $('lock-modal-name').textContent  = acc.name;
   $('lock-modal-email').textContent = acc.email;
-  // Reset paste display
+  // Reset all time pickers
   $('lock-hour').value = '';
   $('lock-min').value  = '';
+  $('type-time-input').value = '';
   const display = $('paste-time-display');
   display.innerHTML = '<span class="paste-time-placeholder">-- : --</span>';
   display.classList.remove('set');
@@ -442,7 +441,7 @@ function handleLockConfirm() {
   const h = parseInt($('lock-hour').value, 10);
   const m = parseInt($('lock-min').value,  10);
   if (isNaN(h) || isNaN(m)) {
-    showToast('Paste a time first', 'amber');
+    showToast('Set a time first', 'amber');
     const btn = $('btn-time-paste');
     btn.classList.add('flash-err');
     setTimeout(() => btn.classList.remove('flash-err'), 800);
@@ -560,18 +559,15 @@ let themePanelOpen = false;
 function applyTheme(name) {
   currentTheme = name;
   const t = THEMES[name] || THEMES.dark;
-  // Set data-theme attribute (empty = default dark)
   if (t.attr) {
     document.documentElement.setAttribute('data-theme', t.attr);
   } else {
     document.documentElement.removeAttribute('data-theme');
   }
   localStorage.setItem('clt_theme', name);
-  // Update button
   const icon = $('theme-icon'), lbl = document.getElementById('theme-label');
   if (icon) icon.textContent = t.icon;
   if (lbl)  lbl.textContent  = t.label;
-  // Update swatch active states
   document.querySelectorAll('.theme-swatch').forEach(sw => {
     sw.classList.toggle('active', sw.dataset.theme === name);
   });
@@ -587,13 +583,10 @@ function closeThemePanel() {
   $('theme-panel').classList.remove('open');
 }
 
-// Apply saved theme on boot
 applyTheme(currentTheme);
 
-// Theme button
 $('btn-theme').addEventListener('click', e => { e.stopPropagation(); toggleThemePanel(); });
 
-// Swatch clicks
 document.querySelectorAll('.theme-swatch').forEach(sw => {
   sw.addEventListener('click', () => {
     applyTheme(sw.dataset.theme);
@@ -602,7 +595,6 @@ document.querySelectorAll('.theme-swatch').forEach(sw => {
   });
 });
 
-// Click outside to close panel
 document.addEventListener('click', e => {
   if (themePanelOpen && !$('theme-panel').contains(e.target) && e.target !== $('btn-theme')) {
     closeThemePanel();
@@ -661,7 +653,6 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
   });
 });
 
-// Add account button
 $('btn-add-account').addEventListener('click', () => {
   if (!jbinKey()) {
     showToast('Set up cloud sync first', 'amber');
@@ -671,10 +662,8 @@ $('btn-add-account').addEventListener('click', () => {
   openAddModal();
 });
 
-// Cloud setup button
 $('btn-cloud-setup').addEventListener('click', openSetupModal);
 
-// Modal events
 $('add-modal-close').addEventListener('click', closeAddModal);
 $('add-modal-overlay').addEventListener('click', closeAddModal);
 $('add-confirm-btn').addEventListener('click', handleAddAccount);
@@ -687,7 +676,6 @@ $('setup-save-btn').addEventListener('click', handleSetupSave);
 $('setup-pull-btn').addEventListener('click', handleSetupPull);
 $('setup-clear-btn').addEventListener('click', handleSetupClear);
 
-// Lock modal
 $('lock-modal-close').addEventListener('click', closeLockModal);
 $('lock-modal-overlay').addEventListener('click', closeLockModal);
 $('lock-modal-cancel').addEventListener('click', closeLockModal);
@@ -701,8 +689,20 @@ function setPickedTime(h, m) {
   display.innerHTML = `${String(h).padStart(2,'0')}<span style="opacity:.5;margin:0 4px">:</span>${String(m).padStart(2,'0')}`;
   display.classList.add('set');
   $('paste-time-area').classList.add('has-time');
+  // Keep the native input in sync
+  $('type-time-input').value = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
   updateLockHint();
 }
+
+// ── Native time input (typed) ─────────────────────────────
+$('type-time-input').addEventListener('change', e => {
+  const val = e.target.value; // "HH:MM"
+  if (!val) return;
+  const [h, m] = val.split(':').map(Number);
+  if (isNaN(h) || isNaN(m)) return;
+  setPickedTime(h, m);
+  showToast(`Time set: ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`, 'green');
+});
 
 // Now button
 $('btn-time-now').addEventListener('click', () => {
@@ -737,29 +737,23 @@ $('btn-time-paste').addEventListener('click', async () => {
   }
 });
 
-
-// Free modal
 $('free-modal-close').addEventListener('click', closeFreeModal);
 $('free-modal-overlay').addEventListener('click', closeFreeModal);
 $('free-modal-cancel').addEventListener('click', closeFreeModal);
 $('free-modal-confirm').addEventListener('click', handleFreeConfirm);
 
-// Inject version from config
 const vEl = document.querySelector('.footer-version-val');
 if (vEl) vEl.textContent = appVersion || 'v1.0';
 
-// Initial render
 buildCards();
 updateStats();
 updateClock();
 setSyncStatus(jbinKey() && jbinId() ? 'ok' : 'idle');
 
-// Show setup modal on first visit if no key configured
 if (!jbinKey()) {
   setTimeout(() => openSetupModal(), 600);
 }
 
-// Auto-pull from cloud on boot
 if (jbinKey() && jbinId()) {
   pullFromJBin().then(data => {
     if (!data) return;
