@@ -609,7 +609,6 @@ document.addEventListener('click', e => {
   }
 });
 
-────
 function setupPWA() {
   function generateIcon(size) {
     const canvas = document.createElement('canvas');
