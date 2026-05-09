@@ -357,12 +357,12 @@ function updateStats() {
     else if (acc.locked && rem <= 0 && acc.lockTime) nReady++;
     else                                             nActive++;
   });
-  $('stat-active').textContent = nActive;
+  $('stat-active') && ($('stat-active').textContent = nActive);
   $('stat-locked').textContent = nLocked;
   $('stat-ready').textContent  = nReady;
   $('stat-next').textContent   = nextMs < Infinity ? fmtCountdown(nextMs) : '—';
   $('fc-all').textContent    = accounts.length;
-  $('fc-active').textContent = nActive;
+  $('fc-active') && ($('fc-active').textContent = nActive);
   $('fc-locked').textContent = nLocked;
   $('fc-ready').textContent  = nReady;
   $('total-count').textContent = accounts.length;
@@ -546,15 +546,11 @@ function handleSetupClear() {
 
 // ── Theme Switcher ────────────────────────────────────────
 const THEMES = {
-  dark:     { icon: '🌙', label: 'Dark',     attr: ''          },
-  light:    { icon: '☀️',  label: 'Light',    attr: 'light'     },
-  midnight: { icon: '🌊', label: 'Midnight', attr: 'midnight'  },
-  forest:   { icon: '🌿', label: 'Forest',   attr: 'forest'    },
-  rose:     { icon: '🌸', label: 'Rose',     attr: 'rose'      },
+  dark:  { icon: '🌙', label: 'Dark', attr: ''      },
+  light: { icon: '☀️',  label: 'Day',  attr: 'light' },
 };
 
 let currentTheme = localStorage.getItem('clt_theme') || 'dark';
-let themePanelOpen = false;
 
 function applyTheme(name) {
   currentTheme = name;
@@ -568,38 +564,17 @@ function applyTheme(name) {
   const icon = $('theme-icon'), lbl = document.getElementById('theme-label');
   if (icon) icon.textContent = t.icon;
   if (lbl)  lbl.textContent  = t.label;
-  document.querySelectorAll('.theme-swatch').forEach(sw => {
-    sw.classList.toggle('active', sw.dataset.theme === name);
-  });
 }
 
-function toggleThemePanel() {
-  themePanelOpen = !themePanelOpen;
-  $('theme-panel').classList.toggle('open', themePanelOpen);
-}
-
-function closeThemePanel() {
-  themePanelOpen = false;
-  $('theme-panel').classList.remove('open');
+function toggleTheme() {
+  const next = currentTheme === 'dark' ? 'light' : 'dark';
+  applyTheme(next);
+  showToast(THEMES[next].icon + ' ' + THEMES[next].label + ' theme', 'purple');
 }
 
 applyTheme(currentTheme);
 
-$('btn-theme').addEventListener('click', e => { e.stopPropagation(); toggleThemePanel(); });
-
-document.querySelectorAll('.theme-swatch').forEach(sw => {
-  sw.addEventListener('click', () => {
-    applyTheme(sw.dataset.theme);
-    showToast(`${THEMES[sw.dataset.theme].icon} ${THEMES[sw.dataset.theme].label} theme`, 'purple');
-    closeThemePanel();
-  });
-});
-
-document.addEventListener('click', e => {
-  if (themePanelOpen && !$('theme-panel').contains(e.target) && e.target !== $('btn-theme')) {
-    closeThemePanel();
-  }
-});
+$('btn-theme').addEventListener('click', e => { e.stopPropagation(); toggleTheme(); });
 
 function setupPWA() {
   function generateIcon(size) {
