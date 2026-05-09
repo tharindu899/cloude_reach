@@ -107,7 +107,7 @@ async function pushToJBin() {
     const res = await fetch(`${jbinBase}/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', 'X-Master-Key': key },
-      body: JSON.stringify({ accounts, resetHours, v: 8 }),
+      body: JSON.stringify({ accounts, v: 8 }),
     });
     if (!res.ok) throw new Error(res.status);
     setSyncStatus('ok');
@@ -145,7 +145,7 @@ async function createBin(key) {
       'X-Bin-Name':   'claude-tracker',
       'X-Bin-Private':'true',
     },
-    body: JSON.stringify({ accounts, resetHours, v: 8 }),
+    body: JSON.stringify({ accounts, v: 8 }),
   });
   if (!res.ok) throw new Error(res.status);
   const data = await res.json();
@@ -633,8 +633,18 @@ $('hm-hour-up').addEventListener('click', () => clampSet('lock-hour', 0, 23,  1)
 $('hm-hour-dn').addEventListener('click', () => clampSet('lock-hour', 0, 23, -1));
 $('hm-min-up').addEventListener('click',  () => clampSet('lock-min',  0, 59,  1));
 $('hm-min-dn').addEventListener('click',  () => clampSet('lock-min',  0, 59, -1));
-$('lock-hour').addEventListener('input', updateLockHint);
-$('lock-min').addEventListener('input',  updateLockHint);
+$('lock-hour').addEventListener('input', e => {
+  let v = e.target.value.replace(/\D/g, '').slice(0, 2);
+  if (v.length && parseInt(v, 10) > 23) v = '23';
+  e.target.value = v;
+  updateLockHint();
+});
+$('lock-min').addEventListener('input', e => {
+  let v = e.target.value.replace(/\D/g, '').slice(0, 2);
+  if (v.length && parseInt(v, 10) > 59) v = '59';
+  e.target.value = v;
+  updateLockHint();
+});
 $('lock-hour').addEventListener('keydown', e => { if (e.key === 'Enter') $('lock-min').focus(); });
 $('lock-min').addEventListener('keydown',  e => { if (e.key === 'Enter') handleLockConfirm(); });
 
